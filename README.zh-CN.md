@@ -53,13 +53,14 @@ flowchart LR
     I --> G[生成这张图]
     G --> EX[executor.md]
     G --> LG[ledger.md]
+    G --> DIR[directives.md]
     G --> OPS[ops.md]
     G --> SV[supervisor.md]
     EX -->|全新上下文| EXE((执行节点))
     EXE <-->|读 / 重写| LG
     SV -->|干净上下文, 每 30 分钟| SUP((监督节点))
     SUP -->|只读| LG
-    SUP -->|纠偏| DIR[directives.md]
+    SUP -->|纠偏| DIR
     DIR -->|每轮读取| EXE
     SUP -->|checkpoint 提交| GIT[(git)]
     SUP -->|须人类决策的缺口| U
@@ -101,7 +102,7 @@ flowchart LR
    /graphkit
    ```
 
-   回答简短面试（仓库与分支、目标 + 如何验证、里程碑、门禁命令、红线、提交授权、是否要监督节点）。
+   回答简短面试（仓库与分支、目标 + 如何验证、里程碑、门禁命令、红线、提交授权、是否要监督节点）。graphkit 会把整张图生成到你仓库里一个全新的 `.graphkit/<日期-slug>/` 目录——**一次 run 一个目录**；新 run 绝不改旧 run 的文件，只把仍成立的结论蒸馏进自己的起点快照。
 
 3. **启动执行节点。** graphkit 交给你一份 `executor.md`——粘进一个全新 agent 上下文让它跑。它是"指向台账的纯 Markdown"，所以这里完全可以用**廉价 agent**（Cursor 低价档、Grok、本地模型），不必是 Claude。用什么方式循环随你（`while` + 唤醒、cron，或每轮重新粘一次）。
 
@@ -116,6 +117,7 @@ flowchart LR
 | [`SKILL.md`](SKILL.md) | 技能入口——面试 + 生成流程。 |
 | [`templates/executor.md`](templates/executor.md) | 执行节点提示词模板。 |
 | [`templates/ledger.md`](templates/ledger.md) | 唯一记分板（共享状态）模板。 |
+| [`templates/directives.md`](templates/directives.md) | 单向纠偏边模板，每次 run 播种。 |
 | [`templates/ops-and-environment.md`](templates/ops-and-environment.md) | 环境/构建/数据事实模板。 |
 | [`templates/supervisor.md`](templates/supervisor.md) | 干净上下文监督节点模板。 |
 | [`docs/methodology.md`](docs/methodology.md) | 深度解析：每条规则防的是哪种失败。 |

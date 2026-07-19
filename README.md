@@ -53,13 +53,14 @@ flowchart LR
     I --> G[Generate the graph]
     G --> EX[executor.md]
     G --> LG[ledger.md]
+    G --> DIR[directives.md]
     G --> OPS[ops.md]
     G --> SV[supervisor.md]
     EX -->|fresh context| EXE((Executor node))
     EXE <-->|reads / rewrites| LG
     SV -->|clean context, every 30 min| SUP((Supervisor node))
     SUP -->|reads only| LG
-    SUP -->|corrections| DIR[directives.md]
+    SUP -->|corrections| DIR
     DIR -->|read each round| EXE
     SUP -->|checkpoint commit| GIT[(git)]
     SUP -->|human-only gaps| U
@@ -101,7 +102,7 @@ The executor prompt is plain Markdown pointing at plain Markdown — **paste it 
    /graphkit
    ```
 
-   Answer the short interview (repos & branches, the goal + how it's verified, milestones, gate commands, red lines, commit authorization, whether you want the supervisor node).
+   Answer the short interview (repos & branches, the goal + how it's verified, milestones, gate commands, red lines, commit authorization, whether you want the supervisor node). graphkit writes the whole graph into a fresh `.graphkit/<date-slug>/` directory in your repo — **one directory per run**; a new run never edits an old run's files, it distills their learnings into its own starting snapshot.
 
 3. **Start the executor node.** graphkit hands you an `executor.md` — paste it into a fresh agent context and let it run. It's plain Markdown pointing at your ledger, so this can be a **cheap agent** (Cursor's budget tier, Grok, a local model) — it doesn't have to be Claude. Loop it however you like (a `while` + wake, a cron, or just re-paste each round).
 
@@ -116,6 +117,7 @@ The executor prompt is plain Markdown pointing at plain Markdown — **paste it 
 | [`SKILL.md`](SKILL.md) | The skill entry — the interview + generation flow. |
 | [`templates/executor.md`](templates/executor.md) | The executor node prompt template. |
 | [`templates/ledger.md`](templates/ledger.md) | The single-scoreboard (shared state) template. |
+| [`templates/directives.md`](templates/directives.md) | The one-way corrections edge, seeded per run. |
 | [`templates/ops-and-environment.md`](templates/ops-and-environment.md) | Durable env/build/data facts template. |
 | [`templates/supervisor.md`](templates/supervisor.md) | The clean-context supervisor node template. |
 | [`docs/methodology.md`](docs/methodology.md) | Deep dive: every rule and the failure it prevents. |

@@ -9,7 +9,7 @@ forward in the "Starting snapshot" below.
 # {{PROJECT}} — graphkit Ledger
 
 > This ledger is the run's only scoreboard. Authority order: {{AUTHORITY_LAYERS}} > this ledger. Environment facts: `ops.md`. Corrections from the supervisor: `directives.md`.
-> When rounds accumulate, archive to `ledger-archive-<date>.md` and keep only the snapshot below. Don't open archives unless debugging.
+> When rounds accumulate, archive to `archive/ledger-archive-<date>.md` beside this file and keep only the snapshot below. Don't open archives unless debugging.
 
 ## Status header
 

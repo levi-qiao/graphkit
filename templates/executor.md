@@ -4,6 +4,9 @@ Replace every {{PLACEHOLDER}}. Delete guidance comments before shipping.
 This is the prompt you paste into a FRESH agent context to run the executor node.
 It shares NO context with the supervisor node — they communicate only through the
 ledger and the directives file.
+Location: this file and its siblings (ledger, directives, ops, supervisor) live in
+the run's own `.graphkit/<YYYY-MM-DD-slug>/` directory; a new run generates a new
+directory and never edits a previous run's files.
 Model: this node is the cheap workforce. It follows one explicit ledger item at a
 time with the rules held outside its context, so a cheap/fast agent (Cursor's
 budget tier, Grok, a local model) runs it fine — save the frontier model for
@@ -69,6 +72,7 @@ Any gap discovered mid-round goes into the ledger's **debt register** with a pri
 - Frozen contracts: zero changes.
 - Metrics only go up: any change that regresses a metric is rolled back the same round.
 - Metrics measured ONLY on the declared real eval set: a number from self-generated / synthetic inputs, or a cherry-picked subset, does not count and is never recorded as progress.
+- Metric evidence artifacts (scorecards, eval outputs) land at versioned persistent paths — the run directory or the repo, never scratch/tmp; a number whose artifact is gone doesn't count.
 }}
 
 ## Subagents (optional)

@@ -12,7 +12,7 @@ graphkit's answer is to make the run a small **graph of nodes that share no cont
 - the **supervisor node** boots fresh every tick, reads only the ledger and git tree, and judges the run from the outside;
 - the edges between them are files a human can open: the **ledger** (shared scoreboard), the **directives file** (one-way corrections), the **git tree** (checkpoints).
 
-Rules 1–7 keep the *executor* honest within a round. Rule 8 — clean-context separation — is what a loop structurally cannot give you, and it's the reason this is a graph.
+Rules 1–7 keep the *executor* honest within a round. Rule 8 — clean-context separation — is what a loop structurally cannot give you, and it's the reason this is a graph. Rule 9 keeps successive *runs* honest with each other.
 
 ## 1. One scoreboard (the ledger)
 
@@ -66,6 +66,12 @@ And one way to stop hard: **any red-line violation halts the run immediately.**
 **Rule:** the supervisor is a **different node with a fresh context**, spun up each tick. It reads only durable state (ledger + git), checkpoint-commits authorized clean work, and corrects drift **only through the directives file the executor reads** — never by editing the ledger the executor is actively writing, never by joining the executor's context.
 
 **Prevents:** *self-blind drift and write contention.* A same-context agent can't catch the drift its own context caused; a clean-context reviewer can, because it wasn't there when the corner was cut. And two agents editing the same scoreboard corrupt it — so the directives file is a strict one-way edge: supervisor writes, executor reads. Checkpoint commits are the supervisor's job precisely because commit authorization is a red line for the executor. This node separation is the load-bearing difference between a graph and a loop.
+
+## 9. One run, one directory
+
+**Rule:** every run generates its artifacts fresh into its own `.graphkit/<YYYY-MM-DD-slug>/` directory. A successor run never edits the previous run's prompts or ledger — it distills what still holds into its own starting snapshot, carries still-in-force STANDING directives forward, and leaves the old directory untouched as the archive.
+
+**Prevents:** *state bleed between runs.* Retargeting an old executor prompt or ledger means patching stale goals line by line — token-expensive, error-prone, and the leftover text quietly steers the new run toward the old goal. Fresh generation from templates plus a distilled snapshot carries exactly the learnings and none of the stale scaffolding; a fixed, predictable location means the supervisor cron and a fresh executor always find state in the same place.
 
 ---
 

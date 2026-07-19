@@ -35,12 +35,15 @@ Why a graph, not a loop: an agent grinding a long task **is inside the context t
                                                    git / you
 ```
 
-Four artifacts from a short interview:
+Five artifacts from a short interview:
 
 1. **`executor.md`** — executor prompt: one task book, one cadence, anti-bloat rules, stop conditions, red lines.
 2. **`ledger.md`** — the single scoreboard both nodes read; the executor rewrites it every round.
-3. **`ops.md`** *(optional)* — durable env facts (build commands, credential/data policy) the executor consults, not re-derives.
-4. **`supervisor.md`** *(optional)* — supervisor prompt, scheduled; checkpoint-commits clean work, corrects drift via the directives file.
+3. **`directives.md`** — the one-way corrections edge, seeded near-empty (STANDING locks + numbered corrections the supervisor appends).
+4. **`ops.md`** *(optional)* — durable env facts (build commands, credential/data policy) the executor consults, not re-derives.
+5. **`supervisor.md`** *(optional)* — supervisor prompt, scheduled; checkpoint-commits clean work, corrects drift via the directives file.
+
+**Run directory — fixed, one per run.** Everything above goes in `.graphkit/<YYYY-MM-DD-slug>/` at the repo root (workspace root for multi-repo runs), plus an `archive/` subdir for in-run rotations. **A new run gets a new directory, generated fresh from the templates — never retarget or edit a previous run's files**: patching stale prompts wastes tokens and leaves leftover text steering toward the old goal. The old directory stays untouched (it *is* the archive); distill what still holds into the new ledger's starting snapshot and copy still-in-force STANDING directives forward. Commit the run directory unless data policy forbids — it's the durable state the graph depends on.
 
 Invariants: **ledger = the only scoreboard**; **one item per round → verify → update ledger**; **the supervisor steers only through `directives.md` (a one-way edge) — it never edits the ledger or shares the executor's context**.
 
@@ -70,7 +73,7 @@ Interview in the user's language and mirror it in the prose inside the artifacts
 
 Decide from context what you reasonably can and state the assumption; anything genuinely the user's call (data policy, DB access, lowering a bar) becomes a red line or an `owner-blocked` item — never silent.
 
-**Step 2 — Generate** from `templates/`: `executor.md`, `ledger.md` (seed status header + gate board + empty rounds log), `ops.md` (only if non-trivial env facts), `supervisor.md` (only if wanted). Replace every `{{PLACEHOLDER}}`, delete guidance comments. **Write lean** — bullets over prose, reference `ops.md` / repo standards instead of inlining, no repeated rationale (mirror the repo's own `AGENTS.md` / standards style). Keep the ledger compact; carry only load-bearing history.
+**Step 2 — Generate** into a fresh `.graphkit/<YYYY-MM-DD-slug>/` from `templates/`: `executor.md`, `ledger.md` (seed status header + gate board + empty rounds log), `directives.md` (seeded from its template), `ops.md` (only if non-trivial env facts), `supervisor.md` (only if wanted). Point every internal path (`{{LEDGER_PATH}}`, `{{DIRECTIVES_PATH}}`) into the run directory. Replace every `{{PLACEHOLDER}}`, delete guidance comments. **Write lean** — bullets over prose, reference `ops.md` / repo standards instead of inlining, no repeated rationale (mirror the repo's own `AGENTS.md` / standards style). Keep the ledger compact; carry only load-bearing history.
 
 **Step 3 — Start the executor** in a **fresh context** (new session or loop mechanism); it's self-contained (points at ledger + ops). It runs fine on a **cheap/fast model** — structure, not model, keeps it on-spec.
 
@@ -88,12 +91,12 @@ Decide from context what you reasonably can and state the assumption; anything g
 - **Forced convergence.** Every Nth round (default 5th) adds zero features — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0. A round adding > ~400 net production lines forces the next to converge.
 - **Register-then-defer.** A gap found mid-round goes into the ledger's debt register by priority — never silently patched on the side, never dropped.
 - **No speculative building.** New endpoint/module/abstraction/pool needs a named real consumer in the ledger first. No compat double-paths, v1/v2 coexistence, or parallel error systems.
-- **Honest measurement.** A metric counts only on the real, declared eval set (the frozen holdout in the ledger). Numbers from synthetic/self-generated inputs or a cherry-picked subset aren't progress and are never recorded — benchmark-gaming the clean-context supervisor must catch.
+- **Honest measurement.** A metric counts only on the real, declared eval set (the frozen holdout in the ledger). Numbers from synthetic/self-generated inputs or a cherry-picked subset aren't progress and are never recorded — benchmark-gaming the clean-context supervisor must catch. Evidence artifacts (scorecards, eval reports) land at versioned persistent paths — the run directory or the repo, never scratch/tmp; a number whose artifact has vanished is struck and re-measured.
 - **Stop conditions.** Milestone all-green → promotion request, stop for sign-off. All remaining items blocked → stop, escalate. Two rounds with no ledger/metric change → stop, stall diagnosis. Red line violated → stop immediately.
 - **Clean-context separation.** The supervisor is a different node with a fresh context: steers via the directives edge, commits on authorization, escalates human-only calls — never merges into the executor's context or writes its ledger.
 
 ## Files in this skill
 
-- `templates/` — the four fill-in artifacts (executor, ledger, ops, supervisor).
+- `templates/` — the five fill-in artifacts (executor, ledger, directives, ops, supervisor).
 - `docs/methodology.md` — the deep dive (why each rule exists, failure modes it prevents).
 - `examples/add-tests-to-cli/` — a fully worked, generic example.
