@@ -67,6 +67,24 @@ flowchart LR
 
 The executor node runs the work against the ledger. The supervisor node — a **separate agent with a clean context** — watches from outside, commits clean checkpoints, and injects course-corrections through a one-way directives edge. The two never share a context and never fight over a file.
 
+## Run it cheap: one smart brain, a cheap workforce
+
+Because the nodes **share no context** — they talk only through Markdown — each node can run on a **different model**. And graphkit's discipline is exactly what makes a *cheap* executor safe to unleash:
+
+- its ambition is capped at **one item per round** — it can't run off and build a framework;
+- the rules live **outside the model**, in the ledger and directives file — not in a giant prompt it has to remember;
+- a **smart supervisor is watching** for the mistakes a weak model makes, and corrects them before they compound.
+
+So you spend frontier-model tokens only where judgment actually pays off:
+
+| Node | Runs | Give it… | Why |
+| --- | --- | --- | --- |
+| **Authoring** (`/graphkit` interview) | once | your best model | designing gates, red lines & milestones is the judgment call |
+| 🛠️ **Executor** | every round, all day | a **cheap / fast agent** — Cursor's budget tier, Grok, a local model, an OSS coder | it just follows an explicit ledger one step at a time; the graph structurally forbids scope creep |
+| 🛰️ **Supervisor** | every ~30 min | a **strong model** | catching drift from a cold read is the hardest call — but it fires rarely, so it's cheap in aggregate |
+
+The executor prompt is plain Markdown pointing at plain Markdown — **paste it into whichever agent is cheapest**; it doesn't have to be Claude. You get frontier-grade reliability on the grind at a fraction of the token bill, because the expensive reasoning is concentrated in the setup and the occasional audit — not burned on every round.
+
 ## Quickstart
 
 1. **Install the skill** — one line:
@@ -85,9 +103,9 @@ The executor node runs the work against the ledger. The supervisor node — a **
 
    Answer the short interview (repos & branches, the goal + how it's verified, milestones, gate commands, red lines, commit authorization, whether you want the supervisor node).
 
-3. **Start the executor node.** graphkit hands you an `executor.md` — paste it into a fresh agent context (or your loop mechanism) and let it run.
+3. **Start the executor node.** graphkit hands you an `executor.md` — paste it into a fresh agent context and let it run. It's plain Markdown pointing at your ledger, so this can be a **cheap agent** (Cursor's budget tier, Grok, a local model) — it doesn't have to be Claude. Loop it however you like (a `while` + wake, a cron, or just re-paste each round).
 
-4. **Start the supervisor node** (optional). graphkit schedules `supervisor.md` on your interval; each tick is a clean context that watches, checkpoints, and corrects.
+4. **Start the supervisor node** (optional, recommended). graphkit schedules `supervisor.md` on your interval; each tick is a **fresh clean context** that watches, checkpoints, and corrects. Point this one at a **strong model** — it runs rarely, and its whole value is catching what the cheap executor can't.
 
 > No Claude Code? The `templates/` are plain Markdown — fill them in by hand and the methodology still works with any agent runtime.
 
@@ -113,7 +131,9 @@ The executor node runs the work against the ledger. The supervisor node — a **
 
 **Why call it a graph and not just "a loop with a monitor"?** Because the load-bearing property is that the supervisor is a *different node with its own clean context*, connected to the executor only by inspectable edges (the ledger, git, the directives file). That separation — not the schedule — is what lets it catch drift the executor can't. It's the same reason multi-agent frameworks model runs as graphs; graphkit just does it with Markdown instead of a runtime.
 
-**Does this only work with Claude Code?** The skill packaging and the `CronCreate`-based supervisor scheduling are Claude Code features, but the nodes and edges are plain Markdown — the methodology is agent-agnostic.
+**Does this only work with Claude Code?** The skill packaging and the `CronCreate`-based supervisor scheduling are Claude Code features, but the nodes and edges are plain Markdown — the methodology is agent-agnostic. In fact the intended setup is *mixed*: author the graph once with a frontier model, then run the executor node on whatever agent is cheapest.
+
+**Can I really run the executor on a cheap model?** Yes — that's the design. A weak model scope-creeps and fakes "done" when you hand it a vague goal; graphkit hands it a *tiny, explicit* one instead (one ledger item, verify, stop), keeps the rules outside its context, and puts a smart supervisor on watch. The structure does the reasoning the cheap model can't, so you pay frontier prices only for authoring + the occasional audit.
 
 **Won't a fixed 5th-round convergence be arbitrary?** It's a default; the interview lets you tune the interval and the net-line cap. The point is that *some* forcing function exists, not the exact number.
 

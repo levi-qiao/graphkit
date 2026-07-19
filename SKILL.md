@@ -1,6 +1,6 @@
 ---
 name: graphkit
-description: Run a long-horizon coding task as a small graph of agent nodes instead of one drifting loop. Interviews the user, then generates an executor node (does the work against a single-source-of-truth ledger) and a clean-context supervisor node that watches from OUTSIDE the executor's context window — checkpoint-committing clean work and correcting drift through a one-way directives file. Use when a task spans many rounds and the agent tends to scope-creep, fake "done", or quietly lower the bar — because an agent inside a long run cannot audit its own drift, and a supervisor with a fresh context can.
+description: Run a long-horizon coding task as a small graph of agent nodes instead of one drifting loop. Interviews the user, then generates an executor node (does the work against a single-source-of-truth ledger) and a clean-context supervisor node that watches from OUTSIDE the executor's context window — checkpoint-committing clean work and correcting drift through a one-way directives file. Use when a task spans many rounds and the agent tends to scope-creep, fake "done", or quietly lower the bar — because an agent inside a long run cannot audit its own drift, and a supervisor with a fresh context can. Nodes share no context, so the executor can run on a cheap/fast model (Cursor, Grok, a local model) while a strong model handles authoring and supervision — cutting cost without losing reliability.
 ---
 
 # graphkit — a graph of agent nodes, not a drifting loop
@@ -87,9 +87,11 @@ Write them to a location the user picks (default: a `graphkit/` folder beside th
 
 Hand the user the generated `executor.md` and tell them to launch it in a **fresh agent context** (a new session, or their loop mechanism). The prompt points at the ledger + ops file, so the executor node is self-contained.
 
+Tell them it's **model-agnostic and the place to save money**: the executor grinds one explicit ledger item per round with the rules held outside its context, so it runs fine on a **cheap / fast agent** (Cursor's budget tier, Grok, a local or OSS coder) — it does not need to be the frontier model that authored the graph. The structure, not the model, is what keeps it on-spec.
+
 ### Step 4 — Start the supervisor node (if chosen)
 
-Schedule `supervisor.md` on the chosen interval. In Claude Code this is `CronCreate` with a cron like `7,37 * * * *` (every 30 min, off the :00/:30 marks so fleets don't stampede). Each tick spins up **a brand-new agent with a clean context** — this is what makes it a supervisor and not more of the same drift. It:
+Schedule `supervisor.md` on the chosen interval. In Claude Code this is `CronCreate` with a cron like `7,37 * * * *` (every 30 min, off the :00/:30 marks so fleets don't stampede). Give this node a **strong model** — judging drift from a cold read is the hardest call in the graph, and since it fires only every ~30 min it stays cheap in aggregate even at frontier rates. Each tick spins up **a brand-new agent with a clean context** — this is what makes it a supervisor and not more of the same drift. It:
 
 - reads only durable state — the ledger + `git status` of each repo — never the executor's context,
 - checkpoint-commits clean, gate-green, complete work (never half-written state), local-only unless push is authorized,

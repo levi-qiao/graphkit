@@ -6,6 +6,9 @@ separation is the whole point. The supervisor is NOT the executor: it observes,
 checkpoint-commits on authorization, and corrects drift ONLY through the directives
 file the executor reads — never by editing the ledger the executor is actively writing,
 and never by sharing the executor's context.
+Model: give this node a STRONG model — judging drift from a cold read is the hardest
+call in the graph. It fires only once per interval, so it stays cheap in aggregate
+even at frontier rates while the cheap executor does the per-round grind.
 -->
 
 Supervisor tick (every {{INTERVAL|default 30 min}}). You are the **supervisor node**, running in a fresh, clean context — not the executor. You have not seen the executor's reasoning; judge only from durable state. Do not change the executor's prompt. Observe, checkpoint-commit on authorization, and correct drift via the directives file only.
