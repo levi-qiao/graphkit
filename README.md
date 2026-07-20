@@ -98,11 +98,27 @@ The executor prompt is plain Markdown pointing at plain Markdown — paste it in
 
 2. **Run `/graphkit` in Claude Code** and answer the interview: repos and branches, the goal and how it is verified, milestones, gate commands, red lines, commit authorization, supervisor interval. The files land in a fresh `.graphkit/<date-slug>/` directory in your repo — one directory per run; a new run never edits an old run's files. ([What each file does →](#files-generated-per-run))
 
-3. **Start the executor:** paste the generated `executor.md` into a fresh agent context. Re-run it each round however you like — cron, a shell loop, or by hand.
+3. **Start the executor** — delegated or manual. Delegated: `scripts/run.sh` drives the loop through any installed agent CLI, one fresh headless invocation per round. Manual: paste the generated `executor.md` into a fresh agent context each round.
 
-4. **Start the supervisor** (optional, recommended): graphkit schedules `supervisor.md` at your interval.
+4. **Start the supervisor** (optional, recommended): delegated via `scripts/run.sh supervisor` (brings its own scheduler), or scheduled by Claude Code at your interval.
 
-Without Claude Code, fill in `templates/` by hand — the method does not depend on the runtime.
+Without Claude Code, fill in `templates/` by hand and use the runner — the method does not depend on the runtime.
+
+## Running the loops through a CLI
+
+The runner turns each node into a supervised shell loop around a headless agent CLI — every round (executor) and every tick (supervisor) is one fresh invocation, so the clean-context invariant survives delegation. Run it from the workspace root:
+
+```bash
+# executor: claude | codex | grok | agy | cursor, any model the CLI accepts
+<skill-dir>/scripts/run.sh executor .graphkit/<run>/ --cli grok --rounds 10
+
+# supervisor: its own scheduler, works outside Claude Code
+<skill-dir>/scripts/run.sh supervisor .graphkit/<run>/ --cli claude --model opus --interval 30m
+```
+
+The loop is closed on four sides: a round/tick **budget** (`--rounds` / `--ticks`), a **stop command** (`run.sh stop <run-dir>`, honored before the next invocation), a **sentinel** (a node ending its output with `GRAPHKIT_STOP: <reason>` ends its loop — stall, red line, milestone sign-off), and a **circuit breaker** (two consecutive CLI failures abort). Every invocation is logged to `<run-dir>/logs/`. `--dry-run` prints the exact command without calling anything; `--model` passes through to the CLI; anything after `--` is forwarded verbatim.
+
+The CLIs are invoked full-auto (`claude -p --dangerously-skip-permissions`, `codex exec --dangerously-bypass-approvals-and-sandbox`, `grok -p --permission-mode bypassPermissions`, `agy -p --dangerously-skip-permissions`, `cursor-agent -p --force`) — that is the point of an unattended loop, and the red lines, budgets and supervisor are the control layer. Don't point it at a workspace you aren't prepared to let an agent edit.
 
 ## Repository layout
 
@@ -112,6 +128,7 @@ These files are read, not edited:
 | --- | --- |
 | [`SKILL.md`](SKILL.md) | The skill entry: the interview and generation flow behind `/graphkit`. |
 | [`templates/`](templates/) | Node and edge templates the skill fills in per run; usable by hand outside Claude Code. |
+| [`scripts/run.sh`](scripts/run.sh) | The delegated runner: loops a node through a headless agent CLI. |
 | [`docs/methodology.md`](docs/methodology.md) | The rationale: each rule and the failure mode it prevents. |
 | [`examples/add-tests-to-cli/`](examples/add-tests-to-cli/) | A worked run — executor and ledger three rounds in. Start here. |
 
@@ -135,7 +152,7 @@ Use it when the task spans many rounds, success is verifiable (tests, gates, met
 
 **Why a graph and not "a loop with a monitor"?** The load-bearing property is that the supervisor is a separate node with its own clean context, connected to the executor only by inspectable edges. That separation — not the schedule — is what lets it catch drift the executor can't. Multi-agent frameworks model runs as graphs for the same reason; graphkit does it with Markdown instead of a runtime.
 
-**Does it require Claude Code?** The skill packaging and supervisor scheduling are Claude Code features, but the nodes and edges are plain Markdown — the method is agent-agnostic. The intended setup is mixed: author the graph once with a strong model, then run the executor on whatever agent is cheapest.
+**Does it require Claude Code?** The skill packaging is a Claude Code feature, but the nodes and edges are plain Markdown and `scripts/run.sh` loops them through any headless agent CLI — the method is agent-agnostic. The intended setup is mixed: author the graph once with a strong model, then run the executor on whatever agent is cheapest.
 
 **Isn't a fixed 5th-round convergence arbitrary?** It's a default; the interview lets you tune the interval and the net-line cap. What matters is that a forcing function exists, not the exact number.
 

@@ -1,6 +1,7 @@
 <!--
 graphkit template: supervisor.md — the SUPERVISOR NODE prompt, fired on a schedule.
-Schedule it with your agent's cron (Claude Code: CronCreate, e.g. `7,37 * * * *`).
+Schedule it with your agent's cron (Claude Code: CronCreate, e.g. `7,37 * * * *`),
+or delegate the loop to a CLI with the skill's `scripts/run.sh supervisor`.
 Each tick spins up a BRAND-NEW agent with a CLEAN context — that fresh-context
 separation is the whole point. The supervisor is NOT the executor: it observes,
 checkpoint-commits on authorization, and corrects drift ONLY through the directives

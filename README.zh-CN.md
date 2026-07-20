@@ -98,11 +98,27 @@ flowchart LR
 
 2. **在 Claude Code 里运行 `/graphkit`**，回答面试：仓库与分支、目标及验证方式、里程碑、门禁命令、红线、提交授权、监督间隔。文件生成到你仓库里全新的 `.graphkit/<日期-slug>/` 目录——一次 run 一个目录，新 run 不改旧 run 的文件。（[每个文件的作用 →](#每次-run-生成的文件)）
 
-3. **启动执行节点：** 把生成的 `executor.md` 粘进一个全新的 agent 上下文。每轮如何重跑随你——cron、shell 循环或手动。
+3. **启动执行节点**——委派或手动。委派：`scripts/run.sh` 把循环交给任意已安装的 agent CLI，每轮一次全新的 headless 调用。手动：每轮把生成的 `executor.md` 粘进一个全新的 agent 上下文。
 
-4. **启动监督节点**（可选，推荐）：graphkit 按你的间隔调度 `supervisor.md`。
+4. **启动监督节点**（可选，推荐）：委派用 `scripts/run.sh supervisor`（自带调度器），或由 Claude Code 按间隔排期。
 
-没有 Claude Code，就手动填写 `templates/`——方法本身不依赖运行时。
+没有 Claude Code，就手动填写 `templates/` 并用 runner 跑——方法本身不依赖运行时。
+
+## 把两个循环直接委派给 CLI
+
+Runner 把每个节点变成包在 headless agent CLI 外面的受控 shell 循环——执行节点的每一轮、监督节点的每个 tick 都是一次全新调用，"干净上下文"这一不变量在委派模式下依然成立。在工作区根目录运行：
+
+```bash
+# 执行节点：claude | codex | grok | agy | cursor，模型任选
+<skill-dir>/scripts/run.sh executor .graphkit/<run>/ --cli grok --rounds 10
+
+# 监督节点：自带调度器，脱离 Claude Code 也能跑
+<skill-dir>/scripts/run.sh supervisor .graphkit/<run>/ --cli claude --model opus --interval 30m
+```
+
+闭环由四道控制构成：轮次/tick **预算**（`--rounds` / `--ticks`）；**停止命令**（`run.sh stop <run-dir>`，下一次调用前生效）；**哨兵**（节点在输出末行写 `GRAPHKIT_STOP: <原因>` 即结束该循环——停滞、红线、里程碑待签核）；**熔断**（连续两次 CLI 失败即中止）。每次调用完整落盘到 `<run-dir>/logs/`。`--dry-run` 只打印将执行的命令；`--model` 透传给 CLI；`--` 之后的参数原样转发。
+
+CLI 均以全自动模式调用（`claude -p --dangerously-skip-permissions`、`codex exec --dangerously-bypass-approvals-and-sandbox`、`grok -p --permission-mode bypassPermissions`、`agy -p --dangerously-skip-permissions`、`cursor-agent -p --force`）——无人值守循环的意义就在于此，红线、预算与监督节点才是控制层。不要把它指向一个你不打算让 agent 改动的工作区。
 
 ## 仓库结构
 
@@ -112,6 +128,7 @@ flowchart LR
 | --- | --- |
 | [`SKILL.md`](SKILL.md) | 技能入口：`/graphkit` 背后的面试与生成流程。 |
 | [`templates/`](templates/) | 节点与边的模板，技能按 run 填充；脱离 Claude Code 也可手动使用。 |
+| [`scripts/run.sh`](scripts/run.sh) | 委派 runner：把节点循环交给任意 headless agent CLI。 |
 | [`docs/methodology.md`](docs/methodology.md) | 设计依据：每条规则及其防范的失败模式。 |
 | [`examples/add-tests-to-cli/`](examples/add-tests-to-cli/) | 一次完整的样例 run——executor 与台账跑到第 3 轮的样子。建议先读。 |
 
@@ -135,7 +152,7 @@ flowchart LR
 
 **为什么是"图"，不是"带监控的循环"？** 关键性质在于：监督方是一个拥有独立干净上下文的节点，只经可检视的边与执行方相连。是这层隔离——而非定时调度——让它能抓到执行方抓不到的漂移。多智能体框架把运行建模成图也是同一个原因；graphkit 用 Markdown 而非运行时实现了它。
 
-**必须配 Claude Code 吗？** 技能封装与监督调度是 Claude Code 特性，但节点与边都是纯 Markdown，方法与具体智能体无关。推荐的用法本来就是混搭：用强模型搭一次图，执行节点交给最便宜的 agent。
+**必须配 Claude Code 吗？** 技能封装是 Claude Code 特性，但节点与边都是纯 Markdown，且 `scripts/run.sh` 能把它们的循环交给任意 headless agent CLI——方法与具体智能体无关。推荐的用法本来就是混搭：用强模型搭一次图，执行节点交给最便宜的 agent。
 
 **固定第 5 轮收敛会不会太武断？** 那是默认值；面试里可调间隔与净行数上限。重要的是存在强制收敛机制，而非具体数字。
 

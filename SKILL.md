@@ -70,14 +70,23 @@ Interview in the user's language and mirror it in the prose inside the artifacts
 5. **Red lines** — halt-the-run non-negotiables: no unauthorized push, no destructive git on others' work, no secrets/real data in code/logs/commits, frozen contracts, metrics-only-up.
 6. **Commit authorization** — may the executor commit? push? (Default: executor implements+verifies; commit is a separate authorized step.)
 7. **Supervisor?** — want the scheduled clean-context supervisor? interval (default 30 min)? Fix the **owner-only decision list** (typical: DDL/schema, credentials / remote env / real-data exposure, spend beyond budget, lowering a metric bar, frozen contracts, push) — everything off that list the supervisor adjudicates itself so the run never stalls waiting for the owner.
+8. **Run mode** — always ask, per node: **delegated** (this skill's `scripts/run.sh` drives the loop through an installed agent CLI — claude / codex / grok / agy / cursor — ask which CLI and which model for each node) or **manual** (the user pastes the prompts into agent contexts themselves). Check `command -v` for the CLIs before offering them.
 
 Decide from context what you reasonably can and state the assumption; anything genuinely the user's call (data policy, DB access, lowering a bar) becomes a red line or an `owner-blocked` item — never silent.
 
 **Step 2 — Generate** into a fresh `.graphkit/<YYYY-MM-DD-slug>/` from `templates/`: `executor.md`, `ledger.md` (seed status header + gate board + empty rounds log), `directives.md` (seeded from its template), `ops.md` (only if non-trivial env facts), `supervisor.md` (only if wanted). Point every internal path (`{{LEDGER_PATH}}`, `{{DIRECTIVES_PATH}}`) into the run directory. Replace every `{{PLACEHOLDER}}`, delete guidance comments. **Write lean** — bullets over prose, reference `ops.md` / repo standards instead of inlining, no repeated rationale (mirror the repo's own `AGENTS.md` / standards style). Keep the ledger compact; carry only load-bearing history.
 
-**Step 3 — Start the executor** in a **fresh context** (new session or loop mechanism); it's self-contained (points at ledger + ops). It runs fine on a **cheap/fast model** — structure, not model, keeps it on-spec.
+**Step 3 — Start the executor** per the chosen run mode. It runs fine on a **cheap/fast model** — structure, not model, keeps it on-spec.
 
-**Step 4 — Start the supervisor** (if chosen) on the interval — Claude Code: `CronCreate`, e.g. `7,37 * * * *` (off :00/:30 so fleets don't stampede). Give it a **strong model** (cold-read drift-judging is the hardest call; fires ~2×/hr, so cheap in aggregate). Each tick is a brand-new clean context that:
+- **Delegated**: from the workspace root, `<skill-dir>/scripts/run.sh executor .graphkit/<slug> --cli <claude|codex|grok|agy|cursor> [--model M] [--rounds N]`. Each round is one fresh headless CLI invocation (the clean-context invariant survives delegation); the loop is budget-capped, logged to `<run-dir>/logs/`, and stops on `run.sh stop <run-dir>` or when the node ends its output with `GRAPHKIT_STOP: <reason>`. Launch it in the background and tell the user the stop command.
+- **Manual**: paste `executor.md` into a **fresh context** each round (it's self-contained — points at ledger + ops); re-run via cron, shell loop, or by hand.
+
+**Step 4 — Start the supervisor** (if chosen) on the interval. Give it a **strong model** (cold-read drift-judging is the hardest call; fires ~2×/hr, so cheap in aggregate).
+
+- **Delegated**: `<skill-dir>/scripts/run.sh supervisor .graphkit/<slug> --cli <name> [--model M] [--interval 30m] [--ticks N]` — brings its own scheduler, works outside Claude Code.
+- **Manual / Claude Code**: schedule with `CronCreate`, e.g. `7,37 * * * *` (off :00/:30 so fleets don't stampede).
+
+Each tick is a brand-new clean context that:
 
 - reads only durable state (ledger + `git status`), never the executor's context;
 - checkpoint-commits clean, gate-green, complete work (never half-written), local-only unless push is authorized;
@@ -99,5 +108,6 @@ Decide from context what you reasonably can and state the assumption; anything g
 ## Files in this skill
 
 - `templates/` — the five fill-in artifacts (executor, ledger, directives, ops, supervisor).
+- `scripts/run.sh` — the delegated runner: loops a node through a headless agent CLI, one fresh invocation per round/tick. `--dry-run` prints the exact command without calling anything.
 - `docs/methodology.md` — the deep dive (why each rule exists, failure modes it prevents).
 - `examples/add-tests-to-cli/` — a fully worked, generic example.
