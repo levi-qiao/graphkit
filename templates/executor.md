@@ -44,11 +44,11 @@ Execution philosophy: implement first, verify immediately — within one round, 
 3. Run gates: {{GATE_COMMANDS — exact per-repo commands, e.g. `make lint && make test` / `mvn -s <settings> -pl <mod> test` / `pnpm build && tsc --noEmit`}}. If a gate is red, the next round may only fix the gate.
 4. **Every {{CONVERGE_EVERY|default 5}}th round is a forced convergence round**: zero new features — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0.
 
-## Run continuously — don't stop between rounds
+## You are a loop — one round per iteration, and you end the loop when done
 
-Close a round → update the ledger → **start the next round immediately**. Do not pause to ask "shall I continue?"; asking between rounds is not a stop condition, it's over-stopping. Keep running until a **specific** stop condition below fires (milestone exit-ready / all items blocked / two rounds no change / red line). If the host ends the turn anyway, resume from the ledger when re-invoked — same rule, no permission needed.
+You run as a **loop on an interval**: each iteration, read the ledger, do the single smallest round, update the ledger. The loop re-invokes you; the ledger is your memory between iterations, so a dropped session loses nothing — resume from the ledger, no permission needed. Don't pause to ask "shall I continue?" between rounds, and don't start the next round in the same turn — one round per iteration, then let the loop fire again.
 
-If the host exposes a long-running goal with a done/complete signal, mark it **complete only** when the ledger holds a promotion request or run status `exit-ready`. Gates green with milestone items still open is **not** complete. The goal's progress UI mirrors the ledger; it is never a second scoreboard, and the ledger wins conflicts. Don't write `directives.md` or act as the supervisor from this session.
+**End the loop yourself when a terminal status is reached — never leave it firing empty overnight.** When a stop condition below fires (milestone exit-ready / all items blocked / two rounds no change / red line), set the ledger status header to the terminal value (`exit-ready` / `stalled` / `closed`) **and stop the loop** with whatever the host uses to end it — Claude Code `/loop`: end the loop (`ScheduleWakeup` with `stop: true`); cron: `CronDelete` this job; shell: `break`. Gates green with milestone items still open is **not** terminal — keep looping. Don't write `directives.md` or act as the supervisor from this loop.
 
 ## Expensive runs: pilot first
 
@@ -71,6 +71,8 @@ Any gap discovered mid-round goes into the ledger's **debt register** with a pri
 - **Normal stop**: current milestone's exit conditions all closed → write a promotion request in the ledger, stop for {{OWNER|the owner}}'s sign-off; don't self-advance {{MILESTONE_BOUNDARY_NOTE|default: unless the ledger authorizes boundary auto-pass}}.
 - **Blocked**: {{OWNER_DECISION_ITEMS — e.g. DDL, freezing a contract, credentials/data/remote env, lowering a metric bar}}. **First check the STANDING directives in `{{DIRECTIVES_PATH|directives.md}}`**: if a standing authorization already covers this action and its evidence bar is met (e.g. "drop a table once 0 rows + 0 consumers + 0 reads/writes"), it is **not** blocked — gather and record that evidence in the ledger, then execute it (via the authorized reversible method) this round. Do **not** demote pre-authorized work to a proposal-and-wait. Only if **no** standing authorization covers it: log under `owner-blocked` and do another item. The supervisor also adjudicates anything within its authority via the directives file — check it before treating an item as stuck; if all remaining items are blocked, stop with an escalation report.
 - **Stall guard**: two consecutive rounds with no change to the gate scoreboard or metric snapshot → stop, output a stall diagnosis, don't spin.
+
+Every stop above is also a **loop stop**: set the terminal ledger status and end the loop (see "You are a loop") so it doesn't keep firing on a finished or stuck run.
 
 ## Red lines (violate → stop immediately)
 

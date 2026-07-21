@@ -87,14 +87,14 @@ flowchart LR
 
 执行方的提示词是指向纯 Markdown 的纯 Markdown，粘进哪家便宜的 agent 都行。贵的推理集中在搭图和偶尔的巡检，不花在每一轮上。
 
-## host 与 node
+## host 与 loop
 
-*node* 是角色——执行节点、监督节点。*host* 只是让一个 node 跨轮次存活的运行时：一个 Grok `/goal` 会话、一次 Claude `CronCreate` tick、或你手动粘进一个全新对话。host 可以互换，图不变。两条规则防止 host 变成第二块记分板：
+*node* 是角色——执行节点、监督节点。*host* 就是一个**按时间间隔反复唤起 node 的 loop**：Claude Code `/loop`、Cursor 后台 agent 的 follow-up 循环、或任意 agent CLI 套在 shell `while` 里。node 在两次迭代之间不留记忆——台账就是记忆——所以会话中断后从台账续跑，什么都不会丢。host 可以互换，图不变。两条规则防止 host 变成第二块记分板：
 
-- **台账是活文件，不是 host 里的文字。** 把执行方提示词交给 host，但台账和 directives 始终是 node 每轮重新读取的文件——绝不折进 host 自己的 goal/提示词文字里，那样会变陈旧。host 的进度 UI（goal 的完成条）只是台账的**镜子**，永不替代它，冲突一律以台账为准。
-- **监督节点永远是自己独立的 host、独立干净上下文**——一个单独会话或一次 cron tick，绝不是执行方会话里的 subagent。那个 subagent 会共享整套方法刻意保持干净的上下文。
+- **台账是活文件，不是 host 里的文字。** 交给 loop 一个指向 run 文件的瘦指针，它每轮重新读取——绝不把台账折进 host 自己的提示词文字里，那样会变陈旧。host 的进度 UI 只是台账的**镜子**，永不替代它，冲突一律以台账为准。
+- **监督节点永远是自己独立的 loop、独立干净上下文**——一个单独的排期或 cron tick，绝不是执行方 loop 里的 subagent。那个 subagent 会共享整套方法刻意保持干净的上下文。
 
-所以"一台廉价执行方 + 另一台强监督方"是头等用法，不是什么特殊集成。启动片段放在 [`templates/hosts/`](templates/hosts/)，按运行时给你什么来分两类：**goal 类** host 把任务跑到完成、自带 done 信号（Grok `/goal`、Codex 委派任务）；**loop 类** host 每轮重新唤起、node 从台账续跑（Cursor 后台 agent、Claude Code `/loop`+cron、shell `while`）。两类的启动器都是指向 run 目录文件的瘦指针，让 node 每轮重读活文件、而不是从粘死的提示词里漂移。每次 run 生成的 `LAUNCH.md` 会用真实路径把对应片段填好。
+两个 loop 在跑完时都会**自己停下**——执行方在台账到达 `exit-ready`/`closed` 时停，监督方在没有东西可提交时停——所以跑完的 run 绝不会整夜空转烧 token。`/graphkit` 会把启动命令直接打印在对话里；"一台廉价执行方 loop + 另一台强监督方 loop"是头等用法，不是什么特殊集成。
 
 ## 快速开始
 
@@ -108,9 +108,9 @@ flowchart LR
 
 2. **在 Claude Code 里运行 `/graphkit`**，回答面试：仓库与分支、目标及验证方式、里程碑、门禁命令、红线、提交授权、监督间隔。文件生成到你仓库里全新的 `.graphkit/<日期-slug>/` 目录——一次 run 一个目录，新 run 不改旧 run 的文件。（[每个文件的作用 →](#每次-run-生成的文件)）
 
-3. **启动执行节点：** 用生成的 `LAUNCH.md` 里的片段在对应 host 上启动。goal 类 host（Grok、Codex）是一个瘦启动器，把任务一轮接一轮跑到完成；loop 类 host（Cursor、Claude Code、shell）由外部循环每轮重新唤起。两种方式会话挂了都从台账续跑，而不是每轮等你去戳一下。
+3. **启动执行方 loop：** 用 `/graphkit` 直接打印在对话里的命令启动——一个指向 `executor.md` 的瘦指针，跑在你 host 的 loop 上（Claude Code `/loop`、Cursor agent、或 shell 里的 agent CLI）。会话挂了从台账续跑，跑到 `exit-ready` 时**自己结束 loop**——不整夜空转，也不用你每轮去戳。
 
-4. **启动监督节点**（可选，推荐）：graphkit 按你的间隔调度 `supervisor.md`——Claude Code 里走 cron，否则每个间隔开一个全新会话。
+4. **启动监督方 loop**（可选，推荐）：第二个 loop，按你的间隔在干净上下文里跑 `supervisor.md`——Claude Code 里走 cron，否则每个间隔开一个全新会话。run 跑完它会自己停下，绝不整夜空转。
 
 没有 Claude Code，就手动填写 `templates/`——方法本身不依赖运行时。
 
@@ -132,12 +132,11 @@ flowchart LR
 
 | 文件 | 谁写 | 作用 |
 | --- | --- | --- |
-| `executor.md` | 生成一次 | 执行节点的提示词。粘进全新 agent 上下文即启动。 |
+| `executor.md` | 生成一次 | 执行节点的提示词——loop 瘦指针指向它。内含 loop 的自停逻辑。 |
 | `ledger.md` | 执行节点，每轮 | 唯一真相：目标、门禁、每轮日志、未决缺口。看它跟进度。 |
 | `directives.md` | 监督节点，单向 | 纠偏指令，执行节点每轮读取。你也可以自己追加。 |
 | `ops.md` | 各节点，只追加 | 环境、构建、数据的持久事实。 |
-| `supervisor.md` | 生成一次 | 监督节点的提示词；Claude Code 里自动排期。 |
-| `LAUNCH.md` | 生成一次 | 所选 host 的复制即用启动片段（Grok `/goal`、cron、粘贴）。只是便捷索引，不是记分板。 |
+| `supervisor.md` | 生成一次 | 监督节点的提示词；Claude Code 里自动排期，run 跑完自己停 loop。 |
 
 ## 适用场景
 

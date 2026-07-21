@@ -15,9 +15,7 @@ forward in the "Starting snapshot" below.
 
 Current milestone: {{M1 or "single goal"}} | Round: 0 (starts at 1) | Last round net lines: —
 Smallest unclosed item: {{FIRST_ITEM}}
-Run status: `active`   <!-- active | paused | exit-ready | stalled | closed -->
-<!-- Host sync (optional, if a goal host drives the executor): Round N · <item> · gate <green|red>.
-     This line mirrors the ledger for the host's progress UI; it is never a second scoreboard. -->
+Run status: `active`   <!-- active | paused | exit-ready | stalled | closed. A terminal status (exit-ready/stalled/closed) is the signal for both loops to stop themselves. -->
 
 ---
 
