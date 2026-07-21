@@ -19,6 +19,10 @@ about them (where they come from, that they're env-injected, that they never get
 - Frontend: `pnpm build && tsc --noEmit`.
 }}
 
+## Standards / conventions (the shared yardstick)
+
+{{The repo's own standards both nodes obey and the supervisor audits against — point at the source of truth, don't restate it: `AGENTS.md` / `CLAUDE.md`, lint & style config, naming/format conventions, "definition of done". E.g. "conventions in `AGENTS.md`; `make lint` enforces style; a change is done only when its gate is green AND lint passes." Delete if the repo has none.}}
+
 ## Credentials / secrets policy
 
 {{How secrets are provided (env injection), and the hard rule that they are never printed / stored / logged / committed. Sample config values left blank. No actual values here.}}

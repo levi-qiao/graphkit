@@ -36,7 +36,7 @@ Loop engineering tries to fix this inside the loop — better prompts, more remi
 Graph engineering moves the structure outside the model: a small graph of specialized agent roles, each starting from a clean context, connected only by durable, inspectable state. graphkit applies this to one scenario — long-horizon coding — with the smallest useful graph:
 
 - **Executor** — does the work, one item per round, against a single ledger.
-- **Supervisor** — starts from a clean context on every tick, reads only the ledger and the git tree, and judges the run as an outside reviewer. It sees the drift the executor cannot, because it never shared the context in which the corner was cut.
+- **Supervisor** — starts from a clean context on every tick and audits the run like an outside reviewer at acceptance: it **re-runs the gates itself** and inspects the real diff against the acceptance criteria and the repo's own standards (`AGENTS.md`/`CLAUDE.md`, `ops.md`), so it catches the drift, fake-done, and undisclosed shortcuts the executor cannot see in the context where the corner was cut — then commits what passes, decides pending items, and adjusts the plan through the one-way directives edge.
 
 The graph is designed to grow beyond these two roles — see the [roadmap](#roadmap-more-node-roles).
 
@@ -47,7 +47,7 @@ The nodes communicate only through inspectable state — a ledger, a git tree, a
 - **Forced convergence.** Every 5th round adds no features — it deletes dead code and tightens interfaces (net lines ≤ 0). A round adding over 400 net lines forces the next into convergence.
 - **Register-then-defer.** Gaps found mid-round are logged, not silently patched or ignored.
 - **Red lines that halt the run.** No unauthorized push, no destructive git on others' work, no secrets in commits, frozen contracts stay frozen, metrics never regress.
-- **One-way corrections.** The supervisor corrects drift — and wasteful method, such as a full-cohort run without a pilot — only through the directives file. It never edits the ledger and never shares the executor's context. It decides by default; only a short owner-only list escalates to you.
+- **Independent acceptance audit.** The supervisor re-verifies claimed-done work from its clean context — re-running the gates and checking the real diff against the acceptance bar and the shared standards (`ops.md`, `AGENTS.md`/`CLAUDE.md`) — and corrects drift, fake-done, wasteful method, or a stale plan only through the directives file. It never edits the ledger and never shares the executor's context. It commits what passes and decides by default; only a short owner-only list escalates to you.
 - **Pre-adjudicated authority.** Owner-only decisions on the goal's critical path (e.g. dropping dead tables when the goal *is* slimming the schema) are settled up front in the interview into a **standing authorization** — an objective evidence bar the loop acts under autonomously — so the run executes its own work instead of stalling on "proposals awaiting sign-off". Only genuinely case-by-case calls escalate to you.
 
 No LangGraph, no Python runtime, no orchestration server: the nodes and edges are Markdown files any coding agent can follow.
