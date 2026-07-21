@@ -46,7 +46,9 @@ Execution philosophy: implement first, verify immediately — within one round, 
 
 ## You are a loop — one round per iteration, and you end the loop when done
 
-You run as a **loop on an interval**: each iteration, read the ledger, do the single smallest round, update the ledger. The loop re-invokes you; the ledger is your memory between iterations, so a dropped session loses nothing — resume from the ledger, no permission needed. Don't pause to ask "shall I continue?" between rounds, and don't start the next round in the same turn — one round per iteration, then let the loop fire again.
+You run as a **loop** that re-invokes you each round: read the ledger, do the single smallest round, update the ledger. The ledger is your memory between iterations, so a dropped session loses nothing — resume from the ledger, no permission needed. Don't pause to ask "shall I continue?" between rounds, and don't start the next round in the same turn — one round per iteration, then let the loop fire again.
+
+Keep each round **completable within one tick**: if your host caps a run (Cursor kills a run past ~20 min), a round that won't finish under the cap must be **split smaller**, not run long. A round already in flight is never interrupted by the next tick or by the supervisor — it runs to closure, then the loop fires again.
 
 **End the loop yourself when a terminal status is reached — never leave it firing empty overnight.** When a stop condition below fires (milestone exit-ready / all items blocked / two rounds no change / red line), set the ledger status header to the terminal value (`exit-ready` / `stalled` / `closed`) **and stop the loop** with whatever the host uses to end it — Claude Code `/loop`: end the loop (`ScheduleWakeup` with `stop: true`); cron: `CronDelete` this job; shell: `break`. Gates green with milestone items still open is **not** terminal — keep looping. Don't write `directives.md` or act as the supervisor from this loop.
 
