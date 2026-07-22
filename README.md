@@ -6,6 +6,10 @@ Cursor, Codex. The methodology is shared; each *arm* adapts it to a host's nativ
 shape (a loop, or a goal). Like an octopus, one nervous system reaching into
 different environments and changing color to fit each one.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+![Hosts: Claude Code · grok · Cursor · Codex](https://img.shields.io/badge/hosts-Claude%20Code%20·%20grok%20·%20Cursor%20·%20Codex-8A2BE2)
+
 <img alt="the graph: an executor node and a clean-context supervisor node communicating only through durable files" src="assets/graph.png" width="100%" />
 
 ## Why this exists
@@ -40,11 +44,12 @@ the host capability matrix is in [`lib/host-dialects.md`](lib/host-dialects.md).
 ## Install
 
 ```sh
-./install.sh            # installs both arms for Claude Code and Codex if present
+curl -fsSL https://raw.githubusercontent.com/levi-qiao/octopus-skill/main/install.sh | sh
 ```
 
-or copy an arm's directory into your host's skills path directly
-(`skills/loop-graph` or `skills/quest`).
+Installs as a single **`/octopus`** skill for Claude Code and Codex — the umbrella
+routes to the right arm. Any existing `/graphkit` install is left untouched. To
+install from a local clone instead, run `./install.sh` from the repo root.
 
 ## Governance — keep it a library, not a junk drawer
 
@@ -54,12 +59,12 @@ opinionated beats comprehensive. Same bar the executor holds inside a run.
 
 ## Credits
 
-The `loop-graph` arm grew from real runs and community input (it began life as the
-standalone *graphkit* skill). Special thanks to
+The `loop-graph` arm grew from real runs and community input — it began life as the
+standalone *graphkit* skill, and this repo is that project, evolved (the old
+`graphkit` URL redirects here). Special thanks to
 **[@BrightProgrammer7](https://github.com/BrightProgrammer7)** — the
 `migrate-blob-storage` worked example and the design discussions that sharpened
-the milestone-gate and node/edge vocabulary. This project continues the work that
-started at [`levi-qiao/graphkit`](https://github.com/levi-qiao/graphkit).
+the milestone-gate and node/edge vocabulary.
 
 ## License
 
