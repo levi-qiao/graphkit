@@ -50,7 +50,7 @@ You run as a **loop** that re-invokes you each round: read the ledger, do the si
 
 Keep each round **completable within one tick**: if your host caps a run (Cursor kills a run past ~20 min), a round that won't finish under the cap must be **split smaller**, not run long. A round already in flight is never interrupted by the next tick or by the supervisor — it runs to closure, then the loop fires again.
 
-**End the loop yourself when a terminal status is reached — never leave it firing empty overnight.** When a stop condition below fires (milestone exit-ready / all items blocked / two rounds no change / red line), set the ledger status header to the terminal value (`exit-ready` / `stalled` / `closed`) **and stop the loop** with whatever the host uses to end it — Claude Code `/loop`: end the loop (`ScheduleWakeup` with `stop: true`); cron: `CronDelete` this job; shell: `break`. Gates green with milestone items still open is **not** terminal — keep looping. Don't write `directives.md` or act as the supervisor from this loop.
+**End the loop yourself when a terminal status is reached — never leave it firing empty overnight.** When a stop condition below fires (final / no-supervisor milestone promotion / all items blocked / two rounds no change / red line), set the ledger status header to the terminal value (`exit-ready` / `stalled` / `closed`) **and stop the loop** with whatever the host uses to end it — Claude Code `/loop`: end the loop (`ScheduleWakeup` with `stop: true`); cron: `CronDelete` this job; shell: `break`. Gates green with milestone items still open is **not** terminal — keep looping; **nor is an intermediate milestone boundary when a supervisor loop adjudicates promotion** — write the promotion request and keep looping until its acceptance directive lands (see Stop & escalate). Don't write `directives.md` or act as the supervisor from this loop.
 
 ## Expensive runs: pilot first
 
@@ -70,11 +70,13 @@ Any gap discovered mid-round goes into the ledger's **debt register** with a pri
 
 ## Stop & escalate
 
-- **Normal stop**: current milestone's exit conditions all closed → write a promotion request in the ledger, stop for {{OWNER|the owner}}'s sign-off; don't self-advance {{MILESTONE_BOUNDARY_NOTE|default: unless the ledger authorizes boundary auto-pass}}.
+- **Milestone boundary**: current milestone's exit conditions all closed. {{If a supervisor loop was chosen, keep the first sub-bullet and delete the second; if not, keep only the second.}}
+  - *(supervisor present)* write the exit-condition evidence + a **promotion request** in the ledger and **keep the loop alive — an intermediate boundary is not terminal.** Don't self-advance or self-declare the milestone accepted: the supervisor independently re-verifies it and, if the gate passes and the evidence is sufficient, appends an **acceptance directive** authorizing the next milestone — advance only when it lands. While waiting, work the debt register or run a convergence pass; start no new next-milestone features. Only the **final** milestone / North Star promotion, or a boundary that is itself an owner-only call, stops for {{OWNER|the owner}}'s sign-off.
+  - *(no supervisor)* write a promotion request and **stop** for {{OWNER|the owner}}'s sign-off; don't self-advance.
 - **Blocked**: {{OWNER_DECISION_ITEMS — e.g. DDL, freezing a contract, credentials/data/remote env, lowering a metric bar}}. **First check the STANDING directives in `{{DIRECTIVES_PATH|directives.md}}`**: if a standing authorization already covers this action and its evidence bar is met (e.g. "drop a table once 0 rows + 0 consumers + 0 reads/writes"), it is **not** blocked — gather and record that evidence in the ledger, then execute it (via the authorized reversible method) this round. Do **not** demote pre-authorized work to a proposal-and-wait. Only if **no** standing authorization covers it: log under `owner-blocked` and do another item. The supervisor also adjudicates anything within its authority via the directives file — check it before treating an item as stuck; if all remaining items are blocked, stop with an escalation report.
 - **Stall guard**: two consecutive rounds with no change to the gate scoreboard or metric snapshot → stop, output a stall diagnosis, don't spin.
 
-Every stop above is also a **loop stop**: set the terminal ledger status and end the loop (see "You are a loop") so it doesn't keep firing on a finished or stuck run.
+Every stop above **that ends the run** (a milestone promotion held for sign-off, all-items-blocked, a stall) is also a **loop stop**: set the terminal ledger status and end the loop (see "You are a loop") so it doesn't keep firing on a finished or stuck run. An **intermediate milestone boundary under supervisor adjudication is not a loop stop** — keep firing until its acceptance directive lands.
 
 ## Red lines (violate → stop immediately)
 
