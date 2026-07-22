@@ -7,6 +7,7 @@
 Current milestone: M2 complete — M3 cutover awaiting owner sign-off | Round: 6 | Last round net lines: +31/−9
 Smallest unclosed item: M3 (owner-only: drop the blob column)
 Convergence: fires at 5 rounds since last or +400 net lines, whichever first | since last: 1 round / +22 net (round 5 was the convergence, reset) | **next round converges: no**
+Milestone gate: `passed` (M2 accepted after the D-001 re-verification; M3 is the final, owner-only boundary — held via Run status, not the soft gate)
 Run status: `owner-blocked`
 
 ---
