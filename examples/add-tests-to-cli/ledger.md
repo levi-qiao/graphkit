@@ -7,6 +7,7 @@
 Current milestone: single goal (date parser green) | Round: 3 | Last round net lines: +18/−0
 Smallest unclosed item: GAP-002 timezone bug in `"in N days"` (picked up this round)
 Convergence: fires at 5 rounds since last or +400 net lines, whichever first | since last: 3 rounds / +42 net | **next round converges: no**
+Milestone gate: `n/a` (single goal — no intermediate boundaries)
 Run status: `active`
 
 ---
