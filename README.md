@@ -45,14 +45,14 @@ the host capability matrix is in [`lib/host-dialects.md`](lib/host-dialects.md).
 
 ## Install
 
-**Claude Code plugin** (recommended) — versioned and auto-updating via the plugin marketplace:
+**Claude Code — plugin.** Claude Code's skill loader does **not** follow symlinked skill dirs, so install it here as a plugin (versioned, auto-updating via the marketplace):
 
 ```
 /plugin marketplace add levi-qiao/octopus-skill
 /plugin install octopus@octopus-skill
 ```
 
-**Script** (Claude Code + Codex) — clones the library and symlinks it as a single `/octopus` skill:
+**Codex / Cursor — script.** These hosts' loaders *do* follow symlinks, so the script clones the library and symlinks it as a single `/octopus` skill (edits to the clone are live):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/levi-qiao/octopus-skill/main/install.sh | sh

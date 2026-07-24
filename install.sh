@@ -1,12 +1,10 @@
 #!/usr/bin/env sh
-# octopus-skill installer — clones the library once and installs it as a single
-# `/octopus` skill (an umbrella that routes to the loop-graph or quest arm inside).
-# Deliberately does NOT touch any existing `graphkit` install, so a running loop
-# is never disturbed; invoke the new library as /octopus.
-# Usage:
-#   curl -fsSL https://raw.githubusercontent.com/levi-qiao/octopus-skill/main/install.sh | sh
-# Claude Code users can instead install via the plugin marketplace:
+# octopus-skill installer — clones the library once and symlinks it as a single
+# `/octopus` skill into the hosts whose loader FOLLOWS symlinks: Codex and Cursor.
+# Claude Code does NOT load symlinked skill dirs — install it there as a plugin:
 #   /plugin marketplace add levi-qiao/octopus-skill  &&  /plugin install octopus@octopus-skill
+# Existing `/graphkit` installs are left untouched. Usage:
+#   curl -fsSL https://raw.githubusercontent.com/levi-qiao/octopus-skill/main/install.sh | sh
 set -eu
 
 REPO="https://github.com/levi-qiao/octopus-skill.git"
@@ -24,9 +22,10 @@ else
   git clone --depth 1 "$REPO" "$CACHE"
 fi
 
-# 2. Symlink the whole library into each host skills dir as `octopus`. One entry;
-#    the root SKILL.md routes to skills/loop-graph or skills/quest, and every
-#    ../../lib reference resolves because the whole repo sits under the link.
+# 2. Symlink the whole library into each symlink-following host's skills dir as
+#    `octopus` (Codex, Cursor — NOT Claude Code, which ignores symlinked skills).
+#    One entry; the root SKILL.md routes to skills/loop-graph or skills/quest, and
+#    every ../../lib reference resolves because the whole repo sits under the link.
 link_octopus() {
   skills_dir="$1"
   [ -d "$(dirname "$skills_dir")" ] || return 0   # host not installed — skip
@@ -41,9 +40,12 @@ link_octopus() {
   echo "  linked $NAME -> $dest"
 }
 
-echo "Installing /octopus (existing /graphkit installs are left untouched):"
-link_octopus "${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
+echo "Linking /octopus into symlink-following hosts (Codex, Cursor):"
 link_octopus "${CODEX_SKILLS_DIR:-$HOME/.codex/skills}"
+link_octopus "${CURSOR_SKILLS_DIR:-$HOME/.cursor/skills}"
 
 echo ""
-echo "✅ octopus-skill installed. In your host, run:  /octopus"
+echo "✅ Linked for Codex / Cursor — run:  /octopus"
+echo "ℹ️  Claude Code does not load symlinked skills; install it there as a plugin:"
+echo "     /plugin marketplace add levi-qiao/octopus-skill"
+echo "     /plugin install octopus@octopus-skill"
