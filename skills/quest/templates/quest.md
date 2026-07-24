@@ -29,8 +29,10 @@ must be checkable from committed code + saved evidence, never from your prose.}}
 - **No test theater.** A passing test must prove the *shipped* code works on the
   real path — no hard-coded expected values, no starting past the thing under
   test, no re-implementing it inside the test. A test that passes while the
-  program is broken is worse than none. Commit the tests and save their run
-  output; the verifier audits that evidence rather than rebuilding it.
+  program is broken is worse than none. Commit the tests. Saved run output is
+  supplemental evidence only; the verifier must independently re-run the
+  acceptance command against the final tree and never treat saved output as
+  authoritative.
 - **No speculative building.** Before adding any endpoint / module / config /
   pool, name its real consumer. No consumer → don't build it. No compat
   double-paths, no v1/v2 coexistence, no parallel error systems.
