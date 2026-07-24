@@ -36,30 +36,33 @@ the host capability matrix is in [`lib/host-dialects.md`](lib/host-dialects.md).
 
 ## Which host, which way
 
-Two arms, one discipline. **Pick the arm by what your host can do**, then run it the
-way that host wants:
+Two arms, one discipline. **Pick the arm by task shape** — then run it the way your
+host wants. Most hosts now do both; the host only rules options out.
 
-- **loop-graph** — for hosts that **loop**. Two prompts: an **executor** loop that
-  works the ledger, plus a clean-context **supervisor** loop that re-verifies from
-  outside and steers via a one-way directives file. *The supervisor is the verifier,
-  and it is **always a `/loop`*** — an auditor must wake from outside the executor's
-  context on an interval, never as a goal (a goal races to "done"; an auditor must not).
-- **quest** — for hosts that **drive a goal to done** on their own. **One** objective
-  prompt; the host's own harness drives it (and, on Grok, verifies it). No second loop.
+- **loop-graph** — multi-milestone / non-skippable gate / executor+supervisor split
+  across hosts / owner-gated, or you want an **independent** verifier. Two prompts: an
+  **executor** loop that works the ledger, plus a clean-context **supervisor** loop
+  that re-verifies from outside and steers via a one-way directives file. *The
+  supervisor is always a `/loop`, never a goal* — an auditor must wake from outside the
+  executor's context on an interval; a goal races to "done".
+- **quest** — a **single self-contained goal** that drives to a real "done". One
+  objective prompt; the host's own harness drives it (and, on Grok, verifies it). No
+  second loop.
 
 Authoritative syntax + matrix: [`lib/host-dialects.md`](lib/host-dialects.md).
 
-| Host | What it has | Arm + how to run it |
+| Host | What it has | How to run each arm |
 |---|---|---|
-| **Claude Code** | `/loop` only (adaptive / self-paced); **no goal command** | **loop-graph.** Executor = `/loop` (omit the interval → self-paced). Supervisor = `/loop`. The supervisor is the verifier. |
-| **Grok** | **both** `/loop` **and** a `/goal` with a **native adversarial verifier** | **Either — pick by task shape.** One self-contained goal → **quest**: `/goal <objective>`. Multi-milestone / split across hosts / owner-gated → **loop-graph**: executor `/loop` + supervisor `/loop`. |
-| **Codex** | goal only — a task **self-drives to done** (auto-wakes each round); **no loop command** | **quest.** **Just send the objective as a task — no command needed**; the executor rides the goal and self-drives. No independent verifier, so make the acceptance criteria reproducible. |
-| **Cursor** | `/loop` only (interval; a run past **~20 min is killed**); no goal | **loop-graph.** Executor `/loop` + supervisor `/loop`; keep every round under 20 min. |
-| **shell / cron** | `while … sleep` / crontab only; no goal | **loop-graph.** Both loops scheduled; `break` on a terminal ledger status. |
+| **Grok** | **both** `/loop` **and** a `/goal` with a **native adversarial verifier** | **quest:** `/goal <objective>`. **loop-graph:** executor `/loop` + supervisor `/loop`. |
+| **Codex** | **both** — a task self-drives a goal to done; a `/loop <interval>` in chat creates a **heartbeat timer** | **quest:** `/goal` / just send the objective as a task (self-drives; no independent verifier — make acceptance reproducible). **loop-graph:** drive **both** nodes with an interval `/loop` (e.g. `/loop 4m …`) — **needs an explicit interval, and never `/goal`**: a goal re-fires a *parked* node forever (livelock). |
+| **Claude Code** | `/loop` (adaptive / self-paced); **no `/goal` command** | **loop-graph:** executor `/loop` (omit interval → self-paced) + supervisor `/loop`; the supervisor is the verifier. **quest:** a self-paced single `/loop` (no independent verifier). |
+| **Cursor** | `/loop` only (interval; a run past **~20 min is killed**); no goal | **loop-graph only.** Executor `/loop` + supervisor `/loop`; keep every round under 20 min. |
+| **shell / cron** | `while … sleep` / crontab only; no goal | **loop-graph only.** Both loops scheduled; `break` on a terminal ledger status. |
 
-Rule of thumb: **executor** = the host's driver (`/loop`, or a self-driving goal);
-**supervisor** = always a separate `/loop`, never a goal. Codex has no loop, so it
-runs quest (one goal); Grok is the only host where you genuinely choose.
+Rule of thumb: **task shape picks the arm; the host only rules options out** (Cursor &
+shell can't quest — no goal). The **supervisor is always a `/loop`, never a goal**. On
+Codex: quest → `/goal`; loop-graph → interval `/loop` heartbeats for *both* nodes,
+because a goal livelocks a parked loop-graph node.
 
 ## The brain (`lib/`)
 

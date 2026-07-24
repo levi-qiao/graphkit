@@ -90,12 +90,12 @@ flowchart LR
 
 ## host 与 loop
 
-*node* 是角色——执行节点、监督节点。*host* 就是一个**反复唤起 node、让它从台账续跑的 loop**：Claude Code `/loop`、Codex 任务、Cursor 后台 agent 的 follow-up 循环、或任意 agent CLI 套在 shell `while` 里。node 在两次迭代之间不留记忆——台账就是记忆——所以会话中断后从台账续跑，什么都不会丢。host 可以互换，图不变。两条规则防止 host 变成第二块记分板：
+*node* 是角色——执行节点、监督节点。*host* 就是一个**反复唤起 node、让它从台账续跑的 loop**：Claude Code `/loop`、Codex `/loop` 心跳、Cursor 后台 agent 的 follow-up 循环、或任意 agent CLI 套在 shell `while` 里。node 在两次迭代之间不留记忆——台账就是记忆——所以会话中断后从台账续跑，什么都不会丢。host 可以互换，图不变。两条规则防止 host 变成第二块记分板：
 
 - **台账是活文件，不是 host 里的文字。** 交给 loop 一个指向 run 文件的瘦指针，它每轮重新读取——绝不把台账折进 host 自己的提示词文字里，那样会变陈旧。host 的进度 UI 只是台账的**镜子**，永不替代它，冲突一律以台账为准。
 - **监督节点永远是自己独立的 loop、独立干净上下文**——一个单独的排期或 cron tick，绝不是执行方 loop 里的 subagent。那个 subagent 会共享整套方法刻意保持干净的上下文。
 
-host 有两种节奏。**自适应**（Codex、Claude Code 自定步的 `/loop`）在上一轮返回后才再唤起，一轮永远不会被打断。**定间隔**（Grok、Cursor、cron）要你设一个延时——`/octopus` 会按一轮大概多久来算出这个间隔、填进启动命令里（Cursor 单次上限约 20m，超了会被杀，所以别超）。执行方和监督方跑在各自错开的排期上，谁都不会打断对方正在进行的一轮。
+host 有两种节奏。**自适应**（Claude Code 自定步的 `/loop`）在上一轮返回后才再唤起，一轮永远不会被打断。**定间隔**（Grok、Cursor、Codex 心跳、cron）要你设一个延时——`/octopus` 会按一轮大概多久来算出这个间隔、填进启动命令里（Cursor 单次上限约 20m，超了会被杀；Codex 的 loop-graph 节点用 `/loop` 心跳，**绝不用 goal**——goal 会在停泊态活锁）。执行方和监督方跑在各自错开的排期上，谁都不会打断对方正在进行的一轮。
 
 两个 loop 在跑完时都会**自己停下**——执行方在台账到达 `exit-ready`/`closed` 时停，监督方在没有东西可提交时停——所以跑完的 run 绝不会整夜空转烧 token。`/octopus` 会把启动命令直接打印在对话里；"一台廉价执行方 loop + 另一台强监督方 loop"是头等用法，不是什么特殊集成。
 

@@ -90,12 +90,12 @@ The executor prompt is plain Markdown pointing at plain Markdown — paste it in
 
 ## Hosts and the loop
 
-A *node* is a role — executor, supervisor. A *host* is just a **loop that re-invokes a node and resumes it from the ledger**: Claude Code `/loop`, a Codex task, a Cursor background agent's follow-up cycle, or any agent CLI in a shell `while`. The node keeps no memory between iterations — the ledger is the memory — so a dropped session resumes with nothing lost. Hosts are interchangeable; the graph doesn't change. Two rules keep a host from becoming a second scoreboard:
+A *node* is a role — executor, supervisor. A *host* is just a **loop that re-invokes a node and resumes it from the ledger**: Claude Code `/loop`, a Codex `/loop` heartbeat, a Cursor background agent's follow-up cycle, or any agent CLI in a shell `while`. The node keeps no memory between iterations — the ledger is the memory — so a dropped session resumes with nothing lost. Hosts are interchangeable; the graph doesn't change. Two rules keep a host from becoming a second scoreboard:
 
 - **The ledger is a live file, not host text.** Hand the loop a thin pointer at the run files; it re-reads them each round — never fold the ledger into the host's own prompt text, where it goes stale. A host's progress UI *mirrors* the ledger; it never replaces it, and the ledger wins every conflict.
 - **The supervisor is its own loop, in a fresh context** — a separate schedule or cron tick, never a subagent inside the executor's loop. That subagent would share the context the whole method keeps clean.
 
-Hosts pace two ways. **Adaptive** hosts (Codex, Claude Code self-paced `/loop`) re-invoke when the last round returns, so a round is never cut off. **Interval** hosts (Grok, Cursor, cron) take a delay you set — `/octopus` sizes it from how long a round takes and prints it in the start command (Cursor is capped at ~20m or the run is killed). The executor and supervisor run on separate, phase-offset schedules and never interrupt each other's in-flight round.
+Hosts pace two ways. The **adaptive** host (Claude Code self-paced `/loop`) re-invokes when the last round returns, so a round is never cut off. **Interval** hosts (Grok, Cursor, Codex heartbeat, cron) take a delay you set — `/octopus` sizes it from how long a round takes and prints it in the start command (Cursor is capped at ~20m or the run is killed; a Codex loop-graph node uses its `/loop` heartbeat, **never** a goal — a goal livelocks at a park). The executor and supervisor run on separate, phase-offset schedules and never interrupt each other's in-flight round.
 
 Both loops **stop themselves** when the run is done — the executor when the ledger reaches `exit-ready`/`closed`, the supervisor once there's nothing left to checkpoint — so a finished run never idles overnight burning tokens. A cheap executor loop on one host and a strong supervisor loop on another is a first-class setup, not a special integration.
 
