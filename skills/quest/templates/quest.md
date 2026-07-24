@@ -1,7 +1,7 @@
 <!--
 octopus quest arm: quest.md — the SINGLE objective prompt.
 Replace every {{PLACEHOLDER}}, delete guidance comments, then hand the result to
-the host's goal command (grok `/goal <this>`; Codex: delegate a task with this brief).
+the host's goal command (Grok `/goal <this>`; Codex: delegate a task with this brief).
 There is NO separate supervisor prompt and NO second loop: the host's own harness
 is the acceptance auditor. Your only job is to write an objective whose acceptance
 criteria that harness can actually check. If the host only loops and has no goal

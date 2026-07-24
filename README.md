@@ -1,14 +1,14 @@
 # octopus-skill 🐙
 
 **One brain, many arms.** A curated library of battle-tested prompts for
-long-horizon agent work, compiled to whatever host you run — Claude Code, grok,
+long-horizon agent work, compiled to whatever host you run — Claude Code, Grok,
 Cursor, Codex. The methodology is shared; each *arm* adapts it to a host's native
 shape (a loop, or a goal). Like an octopus, one nervous system reaching into
 different environments and changing color to fit each one.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-![Hosts: Claude Code · grok · Cursor · Codex](https://img.shields.io/badge/hosts-Claude%20Code%20·%20grok%20·%20Cursor%20·%20Codex-8A2BE2)
+![Hosts: Claude Code · Grok · Cursor · Codex](https://img.shields.io/badge/hosts-Claude%20Code%20·%20Grok%20·%20Cursor%20·%20Codex-8A2BE2)
 
 English · [简体中文](README.zh-CN.md)
 
@@ -28,11 +28,38 @@ and gets compiled down to each host.
 
 | Arm | Use when | Ships |
 |-----|----------|-------|
-| **[`loop-graph`](skills/loop-graph)** | you'll drive it with `/loop` (Claude Code, grok, Cursor, shell); multi-round work that scope-creeps or fakes "done"; multi-milestone phases; executor and supervisor split across hosts/models; owner-gated | an **executor node** (works a single-source-of-truth ledger) + a clean-context **supervisor node** that re-verifies from outside and corrects via a one-way directives file — two loops |
-| **[`quest`](skills/quest)** | you'll hand it to a goal command that self-drives to done (grok `/goal`, a Codex task); a single self-contained goal, executor+reviewer in the same run | **one objective prompt** that folds the discipline in and rides the host's own verifier — no second loop |
+| **[`loop-graph`](skills/loop-graph)** | you'll drive it with `/loop` (Claude Code, Grok, Cursor, shell); multi-round work that scope-creeps or fakes "done"; multi-milestone phases; executor and supervisor split across hosts/models; owner-gated | an **executor node** (works a single-source-of-truth ledger) + a clean-context **supervisor node** that re-verifies from outside and corrects via a one-way directives file — two loops |
+| **[`quest`](skills/quest)** | you'll hand it to a goal command that self-drives to done (Grok `/goal`, a Codex task); a single self-contained goal, executor+reviewer in the same run | **one objective prompt** that folds the discipline in and rides the host's own verifier — no second loop |
 
 Not sure which? The decision rule lives at the top of each arm's `SKILL.md`, and
 the host capability matrix is in [`lib/host-dialects.md`](lib/host-dialects.md).
+
+## Which host, which way
+
+Two arms, one discipline. **Pick the arm by what your host can do**, then run it the
+way that host wants:
+
+- **loop-graph** — for hosts that **loop**. Two prompts: an **executor** loop that
+  works the ledger, plus a clean-context **supervisor** loop that re-verifies from
+  outside and steers via a one-way directives file. *The supervisor is the verifier,
+  and it is **always a `/loop`*** — an auditor must wake from outside the executor's
+  context on an interval, never as a goal (a goal races to "done"; an auditor must not).
+- **quest** — for hosts that **drive a goal to done** on their own. **One** objective
+  prompt; the host's own harness drives it (and, on Grok, verifies it). No second loop.
+
+Authoritative syntax + matrix: [`lib/host-dialects.md`](lib/host-dialects.md).
+
+| Host | What it has | Arm + how to run it |
+|---|---|---|
+| **Claude Code** | `/loop` only (adaptive / self-paced); **no goal command** | **loop-graph.** Executor = `/loop` (omit the interval → self-paced). Supervisor = `/loop`. The supervisor is the verifier. |
+| **Grok** | **both** `/loop` **and** a `/goal` with a **native adversarial verifier** | **Either — pick by task shape.** One self-contained goal → **quest**: `/goal <objective>`. Multi-milestone / split across hosts / owner-gated → **loop-graph**: executor `/loop` + supervisor `/loop`. |
+| **Codex** | goal only — a task **self-drives to done** (auto-wakes each round); **no loop command** | **quest.** **Just send the objective as a task — no command needed**; the executor rides the goal and self-drives. No independent verifier, so make the acceptance criteria reproducible. |
+| **Cursor** | `/loop` only (interval; a run past **~20 min is killed**); no goal | **loop-graph.** Executor `/loop` + supervisor `/loop`; keep every round under 20 min. |
+| **shell / cron** | `while … sleep` / crontab only; no goal | **loop-graph.** Both loops scheduled; `break` on a terminal ledger status. |
+
+Rule of thumb: **executor** = the host's driver (`/loop`, or a self-driving goal);
+**supervisor** = always a separate `/loop`, never a goal. Codex has no loop, so it
+runs quest (one goal); Grok is the only host where you genuinely choose.
 
 ## The brain (`lib/`)
 
@@ -41,7 +68,7 @@ the host capability matrix is in [`lib/host-dialects.md`](lib/host-dialects.md).
   without breaking them.
 - **[`host-dialects.md`](lib/host-dialects.md)** — the single owner of per-host
   differences: loop/goal invocation syntax, adaptive-vs-interval behavior, and
-  wake/notify/keep-alive primitives (grok `Stop`/`Notification` hooks, etc.).
+  wake/notify/keep-alive primitives (Grok `Stop`/`Notification` hooks, etc.).
 
 ## Install
 

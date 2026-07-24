@@ -11,7 +11,7 @@ is no build step and no runtime. One umbrella (`/octopus`) routes to two arms:
 
 - **`skills/loop-graph/`** — an executor node + a clean-context supervisor node driven
   by two loops (for `/loop`-capable hosts).
-- **`skills/quest/`** — one objective prompt for a goal-capable host (grok `/goal`, a Codex task).
+- **`skills/quest/`** — one objective prompt for a goal-capable host (Grok `/goal`, a Codex task).
 
 Deep context lives in [`lib/methodology.md`](lib/methodology.md) (the *why* behind each
 rule) and [`skills/loop-graph/docs/model.md`](skills/loop-graph/docs/model.md) (the
