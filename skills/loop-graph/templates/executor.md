@@ -68,6 +68,16 @@ Any full-cohort / bulk operation — eval over the whole set, bulk VLM/API sweep
 
 Any gap discovered mid-round goes into the ledger's **debt register** with a priority, and is queued for a later round. Never silently patch it now; never drop it.
 
+## Scout handoff (if a scout node is in the graph — else delete)
+
+When you hit a decision that needs off-critical-path research (library choice, API compatibility, a migration guide) and can't settle it cheaply yourself:
+
+1. **Log a pointer, don't block.** Write `blocked-on: findings#<brief-id>` at the decision's ledger row, then move to the next unblocked item — the round doesn't stop. Dispatching the scout is the supervisor's job (a research brief in `{{DIRECTIVES_PATH|directives.md}}`), not yours.
+2. **Consume on-reference.** When a later round reaches that row, open `findings.md` (or `findings/<brief-id>.md`), read the Answer + Recommendation, make the call, and record the decision + rationale in the ledger. The recommendation is advisory — if the evidence doesn't fit your constraints, decide otherwise and record why.
+3. **Retire (custody, not authorship).** Once consumed, move the finding to `archive/findings-<brief-id>.md` and remove the `blocked-on` pointer. You never edit the *content* of the scout's findings file — moving a spent one is a custody hand-off (like the supervisor committing your work), so the scout stays its single writer.
+
+You read findings **only on-reference**, never every round, so the findings edge never joins the ledger's hot path.
+
 ## Stop & escalate
 
 - **Milestone boundary**: current milestone's exit conditions all closed. {{If a supervisor loop was chosen, keep the first sub-bullet and delete the second; if not, keep only the second.}}
