@@ -42,6 +42,7 @@ A node is a specialized agent role. Each node is described by a tuple:
 |------|-------|------------|-------|--------|-----------|------------|
 | **Executor** | cheap/fast | per-round (adaptive or interval) | ledger, directives, ambient | ledger | implementation decisions | ledger reaches `exit-ready` or `closed` |
 | **Supervisor** | strong | cadence (e.g. 30min) | ledger, git diff, ambient | directives | drift corrections, acceptance, plan adjustments | nothing left to commit |
+| **Scout** | cheap/fast | on-demand (research brief in directives) | ledger (read-only), ambient, external | findings | advisory — options + tradeoffs, no plan/impl changes | brief answered, cap hit, or blocked |
 
 `authority` is the field #9 exposed as missing: "who decides X without escalating?" The executor decides *how* to implement; the supervisor decides *whether* the work meets acceptance criteria; the owner decides DDL, credentials, red-line exceptions.
 
@@ -55,6 +56,22 @@ An edge is a durable, typed channel between nodes. Two types:
 |------|------------|---------|
 | **State** (blackboard) | single-writer, overwrite | `ledger.md` — the scoreboard |
 | **Signal** (queue) | single-writer, append-only, one-way | `directives.md` — supervisor → executor |
+
+### Findings edge (scout → executor)
+
+| Property | Value |
+|----------|-------|
+| Type | **State** (single-writer, overwrite) |
+| Writer | scout (single-writer per findings file) |
+| Reader | executor (read-on-reference, via `blocked-on: findings#<brief-id>` ledger pointer) |
+| Discipline | read-on-reference; consume-and-retire |
+| File | `findings.md` (single) or `findings/<brief-id>.md` (parallel) |
+
+Why state, not signal? The scout overwrites its findings file as it refines (partial → complete). Latest-value-wins, not append-only.
+
+**Pointer convention:** the executor logs `blocked-on: findings#<brief-id>` at the decision's ledger row, continues unblocked work, and opens the findings file only when it circles back to that row.
+
+**Retire convention:** once consumed, the executor records the decision in its round log, moves the finding to `archive/findings-<brief-id>.md`, and removes the pointer. The executor never edits findings content — moving a spent file is custody, not authorship.
 
 ### What is NOT an edge
 
@@ -72,6 +89,7 @@ When proposing a new construct (node, edge, flag), fill in the tuple / classify 
 |----------|----------|---------|
 | Auditor node (#9) | Activation = "at milestone gates" needs event-bus the graph doesn't have; degrades to cadence poller = supervisor. Authority = acceptance = already supervisor's. | Collapsed into a tracked flag + red line on the existing supervisor |
 | `gates.md` edge | Signal discipline, but content = one flag per milestone → fits as a field on the state edge | Collapsed into `Milestone gate:` header in `ledger.md` |
+| Scout node (#17) | Activation = on-demand (not cadence/event) — distinct from supervisor. Authority = advisory only (no plan/impl changes) — distinct from executor and supervisor. Write-set = dedicated findings edge (not ledger) — new single-writer file, not a partition of an existing edge. | **Does not collapse** — genuinely new information-flow pattern: off-critical-path research → dedicated state edge → read-on-reference consumption |
 
 The vocabulary earns its keep when filling in the tuple saves one issue → discussion → rewrite cycle.
 
@@ -84,3 +102,6 @@ The vocabulary earns its keep when filling in the tuple saves one issue → disc
 - #11 — milestone gate implementation
 - #12 — this vocabulary's design discussion
 - #15 — worked example showing the gate in action
+- #17 — scout node proposal
+- #18 — scout node implementation (templates + findings edge + worked example)
+- #19 — executor handoff protocol (blocked-on pointer + consume/retire)
