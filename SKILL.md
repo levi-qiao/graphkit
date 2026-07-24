@@ -1,6 +1,6 @@
 ---
 name: octopus
-description: Umbrella entry for the octopus-skill prompt library — pick the right arm for a long-horizon agent task and follow it. Two arms share one discipline (verified-not-written "done", no test theater, no speculative building, forced convergence, owner red lines). The `loop-graph` arm builds an executor + clean-context supervisor as two scheduled loops — for the `/loop` primitive (Claude Code, grok, Cursor, shell), multi-milestone phases, executor/supervisor split across hosts/models, owner-gated runs. The `quest` arm emits one objective prompt handed to a host that already drives a goal to done with its own verifier — for the goal primitive (grok `/goal`, a Codex task). Use this when the user invokes /octopus or is unsure which arm fits.
+description: Umbrella entry for the octopus-skill prompt library — pick the right arm for a long-horizon agent task and follow it. Two arms share one discipline (verified-not-written "done", no test theater, no speculative building, forced convergence, owner red lines). The `loop-graph` arm builds an executor + clean-context supervisor as two scheduled loops — for the `/loop` primitive (Claude Code, Grok, Cursor, shell), multi-milestone phases, executor/supervisor split across hosts/models, owner-gated runs. The `quest` arm emits one objective prompt handed to a host that already drives a goal to done with its own verifier — for the goal primitive (Grok `/goal`, a Codex task). Use this when the user invokes /octopus or is unsure which arm fits.
 ---
 
 # octopus 🐙 — one brain, many arms
@@ -19,13 +19,13 @@ matrix in [`lib/host-dialects.md`](lib/host-dialects.md)):
 | **Cursor**, **shell/cron** | `loop` only | **loop-graph** |
 | **Codex** | `goal` only (no `/loop`) | **quest** |
 | **Claude Code** | `/loop` only (no standalone `/goal`) | **loop-graph** (its supervisor is the verifier) |
-| **grok** | both `/loop` and `/goal` | **either — decide by task shape ↓** |
+| **Grok** | both `/loop` and `/goal` | **either — decide by task shape ↓** |
 
-On grok (the only both-capable host), and whenever a host offers a real choice:
+On Grok (the only both-capable host), and whenever a host offers a real choice:
 
 | Choose | When |
 |--------|------|
-| **[`quest`](skills/quest/SKILL.md)** | a *single self-contained* goal · executor+reviewer in the same run · no owner-only call on the critical path → emit **one objective prompt**, run it with the host's goal command (grok `/goal`, a Codex task), ride its own verifier — no second loop |
+| **[`quest`](skills/quest/SKILL.md)** | a *single self-contained* goal · executor+reviewer in the same run · no owner-only call on the critical path → emit **one objective prompt**, run it with the host's goal command (Grok `/goal`, a Codex task), ride its own verifier — no second loop |
 | **[`loop-graph`](skills/loop-graph/SKILL.md)** | *any* of: multi-milestone phases with a non-skippable gate · executor and supervisor on different hosts/models/cadences · owner red-lines/gates that must stop the run · cross-session durability → build the **executor + clean-context supervisor** two-loop graph, driven by `/loop` |
 
 Rule of thumb by primitive: **you'll drive it with `/loop` → loop-graph; you'll hand
