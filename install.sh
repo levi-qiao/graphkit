@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
 # octopus-skill installer — clones the library once and installs it as a single
-# `/octopus` skill (an umbrella that routes to the graphkit or goal arm inside).
+# `/octopus` skill (an umbrella that routes to the loop-graph or quest arm inside).
 # Deliberately does NOT touch any existing `graphkit` install, so a running loop
 # is never disturbed; invoke the new library as /octopus.
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/levi-qiao/octopus-skill/main/install.sh | sh
+# Claude Code users can instead install via the plugin marketplace:
+#   /plugin marketplace add levi-qiao/octopus-skill  &&  /plugin install octopus@octopus-skill
 set -eu
 
 REPO="https://github.com/levi-qiao/octopus-skill.git"
@@ -23,7 +25,7 @@ else
 fi
 
 # 2. Symlink the whole library into each host skills dir as `octopus`. One entry;
-#    the root SKILL.md routes to skills/graphkit or skills/goal, and every
+#    the root SKILL.md routes to skills/loop-graph or skills/quest, and every
 #    ../../lib reference resolves because the whole repo sits under the link.
 link_octopus() {
   skills_dir="$1"

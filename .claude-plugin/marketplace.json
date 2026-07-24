@@ -1,0 +1,15 @@
+{
+  "name": "octopus-skill",
+  "description": "octopus 🐙 — graph engineering for long-horizon agent work: an executor + clean-context supervisor loop-graph, and a one-objective quest arm, sharing one discipline.",
+  "owner": {
+    "name": "levi-qiao",
+    "url": "https://github.com/levi-qiao"
+  },
+  "plugins": [
+    {
+      "name": "octopus",
+      "source": "./",
+      "description": "Graph engineering for long-horizon agents: loop-graph (executor + clean-context supervisor) and quest (one objective riding the host's own verifier), one shared discipline."
+    }
+  ]
+}

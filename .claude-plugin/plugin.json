@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "octopus",
+  "displayName": "octopus 🐙",
+  "description": "Graph engineering for long-horizon agents — a loop-graph arm (executor + clean-context supervisor) and a quest arm (one objective on a goal-capable host), sharing one discipline. Invoke /octopus; it routes to the right arm.",
+  "author": {
+    "name": "levi-qiao",
+    "url": "https://github.com/levi-qiao"
+  },
+  "homepage": "https://github.com/levi-qiao/octopus-skill",
+  "repository": "https://github.com/levi-qiao/octopus-skill",
+  "license": "MIT",
+  "keywords": [
+    "graph-engineering",
+    "agent-graph",
+    "long-horizon",
+    "loop",
+    "supervisor",
+    "orchestration",
+    "agents"
+  ]
+}

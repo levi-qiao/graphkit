@@ -45,13 +45,22 @@ the host capability matrix is in [`lib/host-dialects.md`](lib/host-dialects.md).
 
 ## Install
 
+**Claude Code plugin** (recommended) — versioned and auto-updating via the plugin marketplace:
+
+```
+/plugin marketplace add levi-qiao/octopus-skill
+/plugin install octopus@octopus-skill
+```
+
+**Script** (Claude Code + Codex) — clones the library and symlinks it as a single `/octopus` skill:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/levi-qiao/octopus-skill/main/install.sh | sh
 ```
 
-Installs as a single **`/octopus`** skill for Claude Code and Codex — the umbrella
-routes to the right arm. Any existing `/graphkit` install is left untouched. To
-install from a local clone instead, run `./install.sh` from the repo root.
+Any existing `/graphkit` install is left untouched; to install from a local clone, run `./install.sh` from the repo root.
+
+**How it's invoked.** `/octopus` is **user-invoked** (type it) *and* **model-invoked** — your agent auto-triggers it on a long-horizon task from the skill description, then routes to the right arm. Both arms are self-contained, so `loop-graph` and `quest` can also be invoked directly.
 
 ## Governance — keep it a library, not a junk drawer
 

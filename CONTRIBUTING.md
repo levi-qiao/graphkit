@@ -19,6 +19,16 @@ most welcome.
 - **New host dialects** — if an agent runtime has a loop or goal primitive not yet
   in `lib/host-dialects.md`, add it there (the single owner of host facts).
 
+## Adding a new node role (`loop-graph`)
+
+The graph grows one node at a time — a node is **one Markdown prompt + one inspectable edge**, no runtime. The scout ([#17](https://github.com/levi-qiao/octopus-skill/issues/17) → [#18](https://github.com/levi-qiao/octopus-skill/pull/18) → [#19](https://github.com/levi-qiao/octopus-skill/issues/19)) is the reference example; the path that merged cleanly:
+
+1. **Propose in an issue first.** State the node's *tuple* — `(prompt, model, activation, read-set, write-set, authority, stop-condition)` — and which existing role it's distinct from. The vocabulary lives in [`skills/loop-graph/docs/model.md`](skills/loop-graph/docs/model.md).
+2. **Give it its own single-writer edge.** Never partition an existing edge — the ledger has exactly one writer. A new writer means a new file it alone writes; other nodes read it. Preserve the edge invariants in `model.md`.
+3. **Keep it off the hot path.** Only the ledger is read every round. A new edge is read *on-reference* (a one-line ledger pointer), so it never bloats the per-round token cost.
+4. **Wire both peers.** A node nobody dispatches or consumes is dead — add the handoff to `executor.md` / `supervisor.md`, kept optional (“delete if no *X* node”).
+5. **Ship a worked example** under the arm's `examples/` proving the full dispatch → consume flow, generic and secret-free.
+
 ## Hard rules
 
 - **No secrets, no real client data, ever** — in examples, fixtures, docs, or commit
