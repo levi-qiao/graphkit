@@ -19,7 +19,13 @@ run without you. Example:
 | G1 | … | `make test` green |
 | G2 | metric ≥ baseline | scorecard at <persistent path> shows ≥ X on the frozen eval set |
 The verifier defaults to "refuted" when it can't reproduce a check — so every row
-must be checkable from committed code + saved evidence, never from your prose.}}
+must be checkable from committed code + saved evidence, never from your prose.
+Each check reproduces with **zero manual correction** of outputs and traverses the
+**real end-to-end path** to the surface a human would check, not a unit shim. A
+prior run's green is **never inherited** — regenerate the evidence this run. When a
+check is a *measurement* (a rate, score, count), it runs on a **fixed, named set** —
+the same inputs every run — so the number is comparable and can't be moved by
+swapping the denominator.}}
 
 ## Discipline (these are what keep a long goal from drifting)
 
@@ -34,6 +40,12 @@ must be checkable from committed code + saved evidence, never from your prose.}}
 - **No speculative building.** Before adding any endpoint / module / config /
   pool, name its real consumer. No consumer → don't build it. No compat
   double-paths, no v1/v2 coexistence, no parallel error systems.
+- **Output present ≠ correct; generalize past the fix.** A value returned, a page
+  rendered, a build that compiles proves nothing until it *matches the expected
+  result* — and until it also holds on a case that wasn't part of the fix. Never
+  hard-code the specific case's identity (id, filename, fixed index) to make a
+  check pass; that overfits the fix, and the verifier treats a self-serving pass
+  as refuted.
 - **Converge, don't only grow.** Periodically ({{CONVERGE_EVERY|~every 5 items}} or
   once you've added {{NET_LINE_CAP|~400}} net lines) do a pass that adds zero
   features — delete dead code, merge duplication, tighten interfaces (net lines
@@ -61,5 +73,8 @@ must be checkable from committed code + saved evidence, never from your prose.}}
 Finish the whole objective. Legitimately stop only for: a genuine external
 blocker (missing credentials, network down, a denied permission), or a decision
 that truly needs {{OWNER|the owner}} and cannot be settled by an evidence bar you
-were given above. State the blocker and the exact evidence/action needed —
-{{OWNER|the owner}} resumes you afterward. Do not stop merely to announce progress.
+were given above. Before parking, **re-verify the blocker is real** against
+current state — re-run the check, re-read the file — a blocker that dissolves on a
+second look is not a blocker, and a false one wastes an owner round. Then state the
+blocker and the exact evidence/action needed — {{OWNER|the owner}} resumes you
+afterward. Do not stop merely to announce progress.

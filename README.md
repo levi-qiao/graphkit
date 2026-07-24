@@ -6,6 +6,11 @@ Cursor, Codex. The methodology is shared; each *arm* adapts it to a host's nativ
 shape (a loop, or a goal). Like an octopus, one nervous system reaching into
 different environments and changing color to fit each one.
 
+This is **graph engineering** for agents: the shift from over-tuning a single
+agent loop to wiring specialized, clean-context roles — executor, supervisor,
+scout — into a graph that communicates only through durable, inspectable files.
+The loop stays dumb; the graph does the thinking.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 ![Hosts: Claude Code · grok · Cursor · Codex](https://img.shields.io/badge/hosts-Claude%20Code%20·%20grok%20·%20Cursor%20·%20Codex-8A2BE2)
