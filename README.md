@@ -56,18 +56,19 @@ host wants. Most hosts now do both; the host only rules options out.
 
 Authoritative syntax + matrix: [`lib/host-dialects.md`](lib/host-dialects.md).
 
-| Host | What it has | How to run each arm |
-|---|---|---|
-| **Grok** | **both** `/loop` **and** a `/goal` with a **native adversarial verifier** | **quest:** `/goal <objective>`. **loop-graph:** executor `/loop` + supervisor `/loop`. |
-| **Codex** | **both** — a task self-drives a goal to done; a `/loop <interval>` in chat creates a **heartbeat timer** | **quest:** `/goal` / just send the objective as a task (self-drives; no independent verifier — make acceptance reproducible). **loop-graph:** drive **both** nodes with an interval `/loop` (e.g. `/loop 4m …`) — **needs an explicit interval, and never `/goal`**: a goal re-fires a *parked* node forever (livelock). |
-| **Claude Code** | `/loop` (adaptive / self-paced); **no `/goal` command** | **loop-graph:** executor `/loop` (omit interval → self-paced) + supervisor `/loop`; the supervisor is the verifier. **quest:** a self-paced single `/loop` (no independent verifier). |
-| **Cursor** | `/loop` only (interval; a run past **~20 min is killed**); no goal | **loop-graph only.** Executor `/loop` + supervisor `/loop`; keep every round under 20 min. |
-| **shell / cron** | `while … sleep` / crontab only; no goal | **loop-graph only.** Both loops scheduled; `break` on a terminal ledger status. |
+Columns are the two arms; ✅ / ⚠️ / ❌ is whether the host can run that arm, and the
+cell is *how*.
 
-Rule of thumb: **task shape picks the arm; the host only rules options out** (Cursor &
-shell can't quest — no goal). The **supervisor is always a `/loop`, never a goal**. On
-Codex: quest → `/goal`; loop-graph → interval `/loop` heartbeats for *both* nodes,
-because a goal livelocks a parked loop-graph node.
+| Host | **quest** — one self-contained goal | **loop-graph** — multi-milestone / gated / want a verifier |
+|---|---|---|
+| **Grok** | ✅ `/goal <objective>` — **native adversarial verifier** | ✅ executor `/loop` + supervisor `/loop` |
+| **Codex** | ✅ `/goal`, or just send the objective as a task (self-drives; no verifier) | ✅ **both** nodes on an interval `/loop` (e.g. `/loop 4m`) — **never `/goal`** (it livelocks a *parked* node) |
+| **Claude Code** | ⚠️ a self-paced single `/loop` — works, but **no independent verifier** | ✅ executor `/loop` (self-paced) + supervisor `/loop` (the supervisor *is* the verifier) |
+| **Cursor** | ❌ no goal primitive | ✅ executor `/loop` + supervisor `/loop` — keep each round < 20 min |
+| **shell / cron** | ❌ no goal primitive | ✅ both loops scheduled; `break` on a terminal ledger status |
+
+Rule of thumb: **task shape picks the arm; the host only rules options out** — ❌ hosts
+can't quest (no goal). The **supervisor is always a `/loop`, never a goal**.
 
 ## The brain (`lib/`)
 

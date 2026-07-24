@@ -45,17 +45,18 @@
 
 权威语法与矩阵见 [`lib/host-dialects.md`](lib/host-dialects.md)。
 
-| 宿主 | 它有什么 | 两条腕分别怎么跑 |
-|---|---|---|
-| **Grok** | **两者都有**:`/loop` 和一个**自带原生对抗式验证器**的 `/goal` | **quest:**`/goal <objective>`。**loop-graph:**执行者 `/loop` + 监督者 `/loop`。 |
-| **Codex** | **两者都有** —— 一个任务能自驱一个 goal 到 done;对话里 `/loop <间隔>` 会建一个**心跳定时器** | **quest:**`/goal` / 直接把 objective 作为任务发给它(自驱;无独立验证器,验收标准要可复现)。**loop-graph:**两个节点都用带间隔的 `/loop`(如 `/loop 4m …`)—— **必须带显式间隔,且绝不用 `/goal`**:goal 会把一个**停泊中**的节点无限重唤(活锁)。 |
-| **Claude Code** | `/loop`(自适应 / 自定步调);**没有 `/goal` 命令** | **loop-graph:**执行者 `/loop`(不带间隔 → 自定步调)+ 监督者 `/loop`;监督者就是验证器。**quest:**一个自定步的单 `/loop`(无独立验证器)。 |
-| **Cursor** | 只有 `/loop`(定间隔;单轮超过 **约 20 分钟会被杀**);无 goal | **只能 loop-graph。** 执行者 `/loop` + 监督者 `/loop`;每轮控制在 20 分钟内。 |
-| **shell / cron** | 只有 `while … sleep` / crontab;无 goal | **只能 loop-graph。** 两个 loop 都要排期;ledger 到终态就 `break`。 |
+两列就是两条腕;✅ / ⚠️ / ❌ 表示这个宿主能不能跑那条腕,格子里是**怎么跑**。
 
-一句话记牢:**任务形态决定用哪条腕;宿主只排除不可用的**(Cursor 和 shell 没有 goal,跑不了
-quest)。**监督者永远是 `/loop`,绝不是 goal。** Codex 上:quest → `/goal`;loop-graph →
-两个节点都用带间隔的 `/loop` 心跳,因为 goal 会把停泊中的 loop-graph 节点活锁。
+| 宿主 | **quest** —— 单一自包含目标 | **loop-graph** —— 多里程碑 / 有闸门 / 要验证器 |
+|---|---|---|
+| **Grok** | ✅ `/goal <objective>` —— **自带原生对抗式验证器** | ✅ 执行者 `/loop` + 监督者 `/loop` |
+| **Codex** | ✅ `/goal`,或直接把 objective 作为任务发给它(自驱;无验证器) | ✅ **两个节点**都用带间隔 `/loop`(如 `/loop 4m`)—— **绝不用 `/goal`**(会把**停泊中**的节点活锁)|
+| **Claude Code** | ⚠️ 一个自定步单 `/loop` —— 能跑,但**无独立验证器** | ✅ 执行者 `/loop`(自定步)+ 监督者 `/loop`(监督者*就是*验证器)|
+| **Cursor** | ❌ 无 goal 原语 | ✅ 执行者 `/loop` + 监督者 `/loop` —— 每轮 < 20 分钟 |
+| **shell / cron** | ❌ 无 goal 原语 | ✅ 两个 loop 都排期;ledger 到终态就 `break` |
+
+一句话记牢:**任务形态决定用哪条腕;宿主只排除不可用的** —— ❌ 的宿主跑不了 quest(没有
+goal)。**监督者永远是 `/loop`,绝不是 goal。**
 
 ## 脑(`lib/`)
 

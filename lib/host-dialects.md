@@ -51,9 +51,8 @@ gate-park: on the adaptive host (Claude Code self-paced) re-invocation is automa
 so a round never gets cut off and a parked executor resumes for free. On interval
 hosts (Grok `/loop`, Cursor, **Codex** heartbeat, shell/cron) **both loops must be
 scheduled** and the executor keeps cheap-ticking until release — a loop that writes a
-terminal status and stops cannot restart itself. (This is exactly why a Codex
-graphkit node uses the interval heartbeat, not a goal: the heartbeat cheap-ticks
-through a park, a goal livelocks on it — see ¹.)
+terminal status and stops cannot restart itself. (A Codex graphkit node therefore
+uses the interval heartbeat, never a goal — see ¹.)
 
 A fresh-context interval host (Codex heartbeat, Grok, shell) also **re-reads the run
 files every round** — executor + ledger + directives — a fixed per-round token tax.
